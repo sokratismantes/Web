@@ -1,0 +1,169 @@
+<?php
+session_start();
+if (!isset($_SESSION['email'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Σύνδεση στη βάση δεδομένων
+$dsn = "mysql:host=localhost;dbname=vasst";
+$dbusername = "root";
+$dbpassword = "";
+
+try {
+    $pdo = new PDO($dsn, $dbusername, $dbpassword);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Ανάκτηση καθηγητών
+    $stmt = $pdo->query("SELECT professor_id, CONCAT(name, ' ', surname) AS full_name FROM professors");
+    $professors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Σφάλμα σύνδεσης με τη βάση δεδομένων: " . $e->getMessage());
+}
+?>
+
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Αποστολή Πρόσκλησης</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            margin: 50px auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #212529;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        label {
+            font-weight: 500;
+            display: block;
+            margin: 15px 0 5px;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        select, textarea, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #495057;
+            background-color: #fff;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .notification {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #28a745;
+            background-color: #d4edda;
+            color: #155724;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+
+        .notification.error {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+    <script>
+        function showNotification(message, isError = false) {
+            const notification = document.querySelector('.notification');
+            notification.textContent = message;
+            notification.className = `notification ${isError ? 'error' : ''}`;
+            notification.style.display = 'block';
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <h1>Αποστολή Πρόσκλησης</h1>
+    <form action="receive.php" method="POST" onsubmit="return handleSubmit(event)">
+        <label for="professor">Επιλογή Καθηγητή:</label>
+        <select name="professor" id="professor" required>
+            <option value="" disabled selected>Επιλέξτε...</option>
+            <?php foreach ($professors as $professor): ?>
+                <option value="<?php echo $professor['professor_id']; ?>">
+                    <?php echo htmlspecialchars($professor['full_name']); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="subject">Θέμα Πρόσκλησης:</label>
+        <input type="text" name="subject" id="subject" required>
+
+        <label for="message">Μήνυμα:</label>
+        <textarea name="message" id="message" rows="4" required></textarea>
+
+        <button type="submit">Αποστολή Πρόσκλησης</button>
+    </form>
+    <div class="notification"></div>
+</div>
+<script>
+    function handleSubmit(event) {
+        event.preventDefault();
+
+        const formData = new FormData(event.target);
+
+        fetch('receive.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            showNotification('Η πρόσκληση στάλθηκε επιτυχώς!');
+            event.target.reset();
+        })
+        .catch(error => {
+            showNotification('Παρουσιάστηκε σφάλμα κατά την αποστολή της πρόσκλησης.', true);
+        });
+    }
+</script>
+</body>
+</html>
