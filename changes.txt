@@ -110,14 +110,21 @@ ALTER TABLE professors ADD PRIMARY KEY (professor_id);
     grade DECIMAL(3,2) DEFAULT NULL,
     report TEXT DEFAULT NULL,
     exam_date DATE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (thesis_id) REFERENCES theses(thesis_id) ON DELETE CASCADE,
-    FOREIGN KEY (professor_id) REFERENCES professors(professor_id) ON DELETE SET NULL
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-10: ALTER TABLE attachments ADD COLUMN uploader_id INT NOT NULL;
+10: ALTER TABLE exam_results 
+ADD CONSTRAINT fk_thesis FOREIGN KEY (thesis_id) 
+REFERENCES theses(thesis_id) ON DELETE CASCADE;
 
-11:CREATE TABLE professors_notifications (
+ALTER TABLE exam_results 
+ADD CONSTRAINT fk_professor FOREIGN KEY (professor_id) 
+REFERENCES professors(professor_id) ON DELETE SET NULL;
+
+
+11: ALTER TABLE attachments ADD COLUMN uploader_id INT NOT NULL;
+
+12:CREATE TABLE professors_notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
     thesis_id INT NOT NULL,
@@ -128,15 +135,15 @@ ALTER TABLE professors ADD PRIMARY KEY (professor_id);
     response_message TEXT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-12:ALTER TABLE professors_notifications
+13:ALTER TABLE professors_notifications
 ADD CONSTRAINT thesis_foreignkey FOREIGN KEY (thesis_id) 
 REFERENCES theses(thesis_id) ON DELETE CASCADE;
 
-13: ALTER TABLE professors_notifications
+14: ALTER TABLE professors_notifications
 ADD CONSTRAINT student_foreignkey FOREIGN KEY (student_id) 
 REFERENCES students(student_id) ON DELETE CASCADE;
 
-14:ALTER TABLE professors_notifications
+15:ALTER TABLE professors_notifications
 ADD CONSTRAINT professor_foreignkey FOREIGN KEY (professor_id) 
 REFERENCES professors(professor_id) ON DELETE CASCADE;
 
