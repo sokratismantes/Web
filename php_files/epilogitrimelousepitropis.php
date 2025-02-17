@@ -15,18 +15,72 @@ if ($conn->connect_error) {
 
 // Διαχείριση υποβολής φόρμας και κλήση της procedure
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
-    $student_id = 101; // Αντικατέστησε με την τρέχουσα ID του φοιτητή (ίσως από SESSION)
-    $thesis_id = 2; // Αντικατέστησε με την επιλεγμένη διπλωματική
+
+
+    // Ανάκτηση του student_id με βάση το email του συνδεδεμένου φοιτητή
+    $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ? AND user_type = 'student'");
+    $stmt->bind_param("s", $_SESSION['email']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    
+    if ($user) {
+        $student_id = $user['user_id']; // Πρέπει να εμφανίζεται ο σωστός ID του φοιτητή
+    } else {
+        die("Σφάλμα: Δεν βρέθηκε ID φοιτητή.");
+    }
+    $stmt->close();
+    
+
+
+// Ανάκτηση του thesis_id του φοιτητή
+$stmt = $conn->prepare("SELECT thesis_id FROM theses WHERE student_id = ?");
+$stmt->bind_param("i", $student_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$thesis = $result->fetch_assoc();
+
+if ($thesis) {
+    $thesis_id = $thesis['thesis_id']; // Πρέπει να εμφανίζεται ο σωστός ID της διπλωματικής
+} else {
+    die("Σφάλμα: Δεν βρέθηκε διπλωματική εργασία για τον φοιτητή.");
+}
+$stmt->close();
+
+
 
     $conn->begin_transaction(); // Ξεκινάμε transaction για ασφάλεια
 
     try {
         foreach ($_POST['professors'] as $professor_id) {
             $stmt = $conn->prepare("CALL SendInvitationToProfessor(?, ?, ?)");
+            if ($stmt === false) {
+                die("Σφάλμα στην προετοιμασία του statement: " . $conn->error);
+            }
+        
             $stmt->bind_param("iii", $student_id, $thesis_id, $professor_id);
-            $stmt->execute();
+            
+            if (!$stmt->execute()) {
+                die("Σφάλμα στην εκτέλεση του statement: " . $stmt->error);
+            }
+        
             $stmt->close();
+        
+            // Debugging: Έλεγχος αν αποθηκεύτηκε η ειδοποίηση
+            $check_stmt = $conn->prepare("SELECT * FROM professors_notifications WHERE professor_id = ? ORDER BY sent_at DESC LIMIT 1");
+            $check_stmt->bind_param("i", $professor_id);
+            $check_stmt->execute();
+            $result = $check_stmt->get_result();
+        
+            if ($result->num_rows > 0) {
+                echo "<p style='color:green;'>Η ειδοποίηση καταχωρήθηκε επιτυχώς για τον καθηγητή $professor_id</p>";
+            } else {
+                echo "<p style='color:red;'>Σφάλμα: Δεν αποθηκεύτηκε ειδοποίηση για τον καθηγητή $professor_id</p>";
+            }
+        
+            $check_stmt->close();
         }
+        
 
         $conn->commit();
         $message = "Οι προσκλήσεις στάλθηκαν επιτυχώς!";
