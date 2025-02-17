@@ -28,26 +28,25 @@ try {
     $professor = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$professor) {
-        echo json_encode([]);
+        echo json_encode([]); // Ο χρήστης δεν είναι καθηγητής
         exit();
     }
 
     $professor_id = $professor['user_id'];
 
-    // Ανάκτηση ειδοποιήσεων με όνομα φοιτητή (αποστολέα)
+    // Ανάκτηση ειδοποιήσεων από professors_notifications
     $stmt = $pdo->prepare("
         SELECT 
-            pn.id, 
-            pn.subject, 
-            pn.message, 
-            pn.created_at, 
-            pn.type, 
-            IFNULL(CONCAT(s.name, ' ', s.surname), 'Άγνωστος') AS sender_name
+            pn.notification_id, 
+            pn.student_id, 
+            pn.thesis_id, 
+            pn.status, 
+            pn.sent_at, 
+            CONCAT(s.name, ' ', s.surname) AS sender_name
         FROM professors_notifications pn
-        LEFT JOIN theses t ON t.supervisor_id = pn.professor_id
-        LEFT JOIN students s ON s.student_id = t.student_id
-        WHERE pn.professor_id = ? AND pn.status = 'Unread'
-        ORDER BY pn.created_at DESC
+        JOIN students s ON s.student_id = pn.student_id
+        WHERE pn.professor_id = ? AND pn.status = 'Pending'
+        ORDER BY pn.sent_at DESC
     ");
     $stmt->execute([$professor_id]);
 
