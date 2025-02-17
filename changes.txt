@@ -147,6 +147,18 @@ REFERENCES students(student_id) ON DELETE CASCADE;
 ADD CONSTRAINT professor_foreignkey FOREIGN KEY (professor_id) 
 REFERENCES professors(professor_id) ON DELETE CASCADE;
 
+16: CREATE PROCEDURE SendInvitationToProfessor(
+    IN p_student_id INT,
+    IN p_thesis_id INT,
+    IN p_professor_id INT
+)
+BEGIN
+    
+    -- Αποθήκευση της ειδοποίησης στον πίνακα professors_notifications
+    INSERT INTO professors_notifications (student_id, thesis_id, professor_id, status, sent_at)
+    VALUES (p_student_id, p_thesis_id, p_professor_id, 'Pending', NOW());
+
+END $$
 
 ΑΡΧΙΚΗ ΒΑΣΗ 
 
