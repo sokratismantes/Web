@@ -327,49 +327,34 @@ footer {
     document.getElementById('notifications-popup').style.display = 'block';
 
     fetch('fetch_notifications.php')
-        .then(response => response.json())
-        .then(data => {
-            const notificationsList = document.getElementById('notifications-list');
-            notificationsList.innerHTML = '';
+    .then(response => response.json())
+    .then(data => {
+        const notificationsList = document.getElementById('notifications-list');
+        notificationsList.innerHTML = '';
 
-            if (data.length > 0) {
-                let committeeInvitations = '';
-                let generalNotifications = '';
+        if (data.length > 0) {
+            let notificationsHTML = '';
 
-                data.forEach(notification => {
-                    if (notification.type === 'committee_invitation') {
-                        committeeInvitations += `
-                            <li>
-                                <strong>${notification.subject}</strong><br>
-                                ${notification.message}<br>
-                                <small>Ημερομηνία: ${notification.created_at}</small>
-                            </li>`;
-                    } else {
-                        generalNotifications += `
-                            <li>
-                                <strong>${notification.subject}</strong><br>
-                                ${notification.message}<br>
-                                <small>Ημερομηνία: ${notification.created_at}</small>
-                            </li>`;
-                    }
-                });
+            data.forEach(notification => {
+                notificationsHTML += `
+                    <li>
+                        <strong>Πρόσκληση Επιτροπής</strong><br>
+                        Φοιτητής ID: ${notification.student_id} - Διπλωματική ID: ${notification.thesis_id}<br>
+                        Κατάσταση: ${notification.status} <br>
+                        <small>Ημερομηνία: ${notification.sent_at}</small>
+                    </li>`;
+            });
 
-                notificationsList.innerHTML = `
-                    <h4>Προσκλήσεις Τριμελούς Επιτροπής</h4>
-                    ${committeeInvitations || '<li>Δεν υπάρχουν προσκλήσεις.</li>'}
-                    <h4>Γενικές Ειδοποιήσεις</h4>
-                    ${generalNotifications || '<li>Δεν υπάρχουν γενικές ειδοποιήσεις.</li>'}
-                `;
-            } else {
-                notificationsList.innerHTML = '<li>Δεν υπάρχουν νέες ειδοποιήσεις.</li>';
-            }
-        })
-        .catch(error => {
-            const notificationsList = document.getElementById('notifications-list');
-            notificationsList.innerHTML = `<li>Σφάλμα: ${error.message}</li>`;
-        });
+            notificationsList.innerHTML = notificationsHTML;
+        } else {
+            notificationsList.innerHTML = '<li>Δεν υπάρχουν νέες ειδοποιήσεις.</li>';
+        }
+    })
+    .catch(error => {
+        notificationsList.innerHTML = `<li>Σφάλμα: ${error.message}</li>`;
+    });
+
 }
-
 
 function markAsRead(notificationId) {
     fetch('mark_notification_as_read.php', {
