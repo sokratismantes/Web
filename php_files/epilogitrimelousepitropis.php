@@ -16,69 +16,66 @@ if ($conn->connect_error) {
 
 // Ελέγχουμε αν έγινε POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
-
-    // **Ανάκτηση του student_id βάσει email**
-    $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ? AND user_type = 'student'");
-    $stmt->bind_param("s", $_SESSION['email']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
-
-    if ($user) {
-        $student_id = $user['user_id'];
+    
+    // **Έλεγχος αν έχουν επιλεγεί πάνω από 2 καθηγητές**
+    if (count($_POST['professors']) > 2) {
+        $message = "Σφάλμα: Δεν μπορείτε να επιλέξετε πάνω από 2 καθηγητές.";
     } else {
-        die("Σφάλμα: Δεν βρέθηκε ID φοιτητή.");
-    }
+        // **Ανάκτηση του student_id βάσει email**
+        $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ? AND user_type = 'student'");
+        $stmt->bind_param("s", $_SESSION['email']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+        $stmt->close();
 
-    // **Ανάκτηση του thesis_id του φοιτητή**
-    $stmt = $conn->prepare("SELECT thesis_id FROM theses WHERE student_id = ?");
-    $stmt->bind_param("i", $student_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $thesis = $result->fetch_assoc();
-    $stmt->close();
-
-    if ($thesis) {
-        $thesis_id = $thesis['thesis_id'];
-    } else {
-        die("Σφάλμα: Δεν βρέθηκε διπλωματική εργασία για τον φοιτητή.");
-    }
-
-    // **Ξεκινάμε transaction για ασφάλεια**
-    $conn->begin_transaction(); 
-
-    try {
-        foreach ($_POST['professors'] as $professor_id) {
-            // **Κλήση της stored procedure**
-            $stmt = $conn->prepare("CALL SendInvitationToProfessor(?, ?, ?)");
-            if ($stmt === false) {
-                throw new Exception("Σφάλμα στην προετοιμασία του statement: " . $conn->error);
-            }
-
-            $stmt->bind_param("iii", $student_id, $thesis_id, $professor_id);
-            
-            if (!$stmt->execute()) {
-                throw new Exception("Σφάλμα στην εκτέλεση της procedure: " . $stmt->error);
-            }
-            $stmt->close();
-
-            // **Έλεγχος αν προστέθηκε η ειδοποίηση στον πίνακα professors_notifications**
-            $check_stmt = $conn->prepare("SELECT * FROM professors_notifications WHERE professor_id = ? AND student_id = ? AND thesis_id = ? ORDER BY sent_at DESC LIMIT 1");
-            $check_stmt->bind_param("iii", $professor_id, $student_id, $thesis_id);
-            $check_stmt->execute();
-            $result = $check_stmt->get_result();
-
-            $check_stmt->close();
+        if ($user) {
+            $student_id = $user['user_id'];
+        } else {
+            die("Σφάλμα: Δεν βρέθηκε ID φοιτητή.");
         }
 
-        // **Commit εφόσον όλα πάνε καλά**
-        $conn->commit();
-        $message = "Οι προσκλήσεις στάλθηκαν επιτυχώς!";
-    } catch (Exception $e) {
-        // **Rollback αν υπάρξει σφάλμα**
-        $conn->rollback();
-        $message = "Σφάλμα: " . $e->getMessage();
+        // **Ανάκτηση του thesis_id του φοιτητή**
+        $stmt = $conn->prepare("SELECT thesis_id FROM theses WHERE student_id = ?");
+        $stmt->bind_param("i", $student_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $thesis = $result->fetch_assoc();
+        $stmt->close();
+
+        if ($thesis) {
+            $thesis_id = $thesis['thesis_id'];
+        } else {
+            die("Σφάλμα: Δεν βρέθηκε διπλωματική εργασία για τον φοιτητή.");
+        }
+
+        // **Ξεκινάμε transaction για ασφάλεια**
+        $conn->begin_transaction(); 
+
+        try {
+            foreach ($_POST['professors'] as $professor_id) {
+                // **Κλήση της stored procedure**
+                $stmt = $conn->prepare("CALL SendInvitationToProfessor(?, ?, ?)");
+                if ($stmt === false) {
+                    throw new Exception("Σφάλμα στην προετοιμασία του statement: " . $conn->error);
+                }
+
+                $stmt->bind_param("iii", $student_id, $thesis_id, $professor_id);
+                
+                if (!$stmt->execute()) {
+                    throw new Exception("Σφάλμα στην εκτέλεση της procedure: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+
+            // **Commit εφόσον όλα πάνε καλά**
+            $conn->commit();
+            $message = "Οι προσκλήσεις στάλθηκαν επιτυχώς!";
+        } catch (Exception $e) {
+            // **Rollback αν υπάρξει σφάλμα**
+            $conn->rollback();
+            $message = "Σφάλμα: " . $e->getMessage();
+        }
     }
 }
 ?>
@@ -135,14 +132,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
         .back-button {
             display: inline-block;
             margin-top: 10px;
-            padding: 10px 20px;
-            background-color:rgb(19, 127, 221);
+            padding: 6px 20px;
+            background-color: rgb(19, 127, 221);
             color: white;
             text-decoration: none;
             border-radius: 5px;
         }
         .back-button:hover {
-            background-color: #5a6268;
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            font-size: 1rem;
+            font-weight: bold;
+            display: none;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -154,8 +158,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
         <?php if (!empty($message)): ?>
             <p class="message"><?php echo $message; ?></p>
         <?php endif; ?>
+        
+        <p class="error-message" id="error-message">Δεν μπορείτε να επιλέξετε πάνω από 2 καθηγητές.</p>
 
-        <form method="POST">
+        <form id="professors-form" method="POST">
             <table>
                 <thead>
                     <tr>
@@ -180,6 +186,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const professorList = document.getElementById('professor-list');
+            const form = document.getElementById('professors-form');
+            const errorMessage = document.getElementById('error-message');
+
+            form.addEventListener('submit', function (event) {
+                const selectedProfessors = document.querySelectorAll('input[name="professors[]"]:checked');
+
+                if (selectedProfessors.length > 2) {
+                    event.preventDefault(); // Ακύρωση αποστολής φόρμας
+                    errorMessage.style.display = 'block';
+                } else {
+                    errorMessage.style.display = 'none';
+                }
+            });
 
             fetch('fetch_theses(epilogitrimelousepitropis).php')
                 .then(response => response.json())
@@ -187,22 +206,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
                     professorList.innerHTML = '';
                     data.forEach(professor => {
                         const row = document.createElement('tr');
-                        row.innerHTML = 
-                            `<td><input type="checkbox" name="professors[]" value="${professor.professor_id}"></td>
-                            <td>${professor.name}</td>
-                            <td>${professor.surname}</td>`;
+                        row.innerHTML = `<td><input type="checkbox" name="professors[]" value="${professor.professor_id}"></td>
+                                         <td>${professor.name}</td>
+                                         <td>${professor.surname}</td>`;
                         professorList.appendChild(row);
                     });
-                })
-                .catch(error => {
-                    professorList.innerHTML = `<tr><td colspan="3" class="loading">${error.message}</td></tr>`;
                 });
         });
     </script>
-
 </body>
 </html>
 
 <?php
 $conn->close();
-?>  
+?>
