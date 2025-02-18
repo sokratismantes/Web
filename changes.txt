@@ -160,6 +160,25 @@ BEGIN
 
 END $$
 
+17: DELIMITER $$
+
+CREATE PROCEDURE SendFormInvitationToProfessor(
+    IN p_student_id INT,
+    IN p_thesis_id INT,
+    IN p_professor_id INT,
+    IN p_topic VARCHAR(255),  -- Προσθήκη θέματος (topic)
+    IN p_message TEXT         -- Προσθήκη μηνύματος (message)
+)
+BEGIN
+    -- Αποθήκευση της ειδοποίησης στον πίνακα form
+    INSERT INTO form (student_id, theses_id, professor_id, topic, message, created_at)
+    VALUES (p_student_id, p_thesis_id, p_professor_id, p_topic, p_message, NOW());
+
+END $$
+
+DELIMITER ;
+
+
 ΑΡΧΙΚΗ ΒΑΣΗ 
 
 CREATE TABLE `users` (
