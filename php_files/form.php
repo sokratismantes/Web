@@ -85,13 +85,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
 
         h1 {
             color: #212529;
             font-size: 24px;
             margin-bottom: 20px;
-            text-align: center;
         }
 
         label {
@@ -100,6 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin: 15px 0 5px;
             font-size: 14px;
             color: #495057;
+            text-align: left;
         }
 
         select, textarea, input[type="text"] {
@@ -117,21 +118,63 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             resize: none;
         }
 
-        button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s ease;
+        /* Στυλ για τα κουμπιά ώστε να έχουν το ίδιο μέγεθος */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        button:hover {
+        .submit-button {
+            display: inline-block;
+            width: 100%;
+            max-width: 300px; 
+            padding: 8px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: none;
+            margin-top: 10px;
+        }
+
+        .back-button {
+            display: inline-block;
+            width: 100%;
+            max-width: 300px; 
+            padding: 2px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: none;
+            margin-top: 8px;
+        }
+
+
+        /* Πράσινο κουμπί αποστολής προσκλήσεων */
+        .submit-button {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .submit-button:hover {
+            background-color: #218838;
+        }
+
+        /* Μπλε κουμπί επιστροφής */
+        .back-button {
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            line-height: 40px; /* Σωστή στοίχιση του κειμένου */
+        }
+
+        .back-button:hover {
             background-color: #0056b3;
         }
 
@@ -180,7 +223,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <label for="message">Μήνυμα:</label>
         <textarea name="message" id="message" rows="4" required></textarea>
 
-        <button type="submit">Αποστολή Πρόσκλησης</button>
+        <div class="button-container">
+            <!-- Πράσινο κουμπί αποστολής -->
+            <button type="submit" class="submit-button">Αποστολή Πρόσκλησης</button>
+
+            <!-- Μπλε κουμπί επιστροφής -->
+            <a href="student_home.php" class="back-button">Επιστροφή στην Αρχική Οθόνη</a>
+        </div>
     </form>
 </div>
 </body>
