@@ -1,4 +1,4 @@
-<?php
+<?php 
 session_start();
 
 // Σύνδεση με τη βάση δεδομένων
@@ -69,12 +69,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
             $check_stmt->execute();
             $result = $check_stmt->get_result();
 
-            if ($result->num_rows > 0) {
-                echo "<p style='color:green;'>Η ειδοποίηση καταχωρήθηκε επιτυχώς για τον καθηγητή $professor_id</p>";
-            } else {
-                throw new Exception("Σφάλμα: Δεν αποθηκεύτηκε ειδοποίηση για τον καθηγητή $professor_id");
-            }
-
             $check_stmt->close();
         }
 
@@ -138,6 +132,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
             color: green;
             font-weight: bold;
         }
+        .back-button {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color:rgb(19, 127, 221);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .back-button:hover {
+            background-color: #5a6268;
+        }
     </style>
 </head>
 <body>
@@ -166,6 +172,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
             </table>
             <button type="submit" class="submit-button">Αποστολή Προσκλήσεων</button>
         </form>
+
+        <!-- Τοποθετήσαμε το κουμπί επιστροφής κάτω από το πράσινο κουμπί -->
+        <a href="student_home.php" class="back-button">Επιστροφή στην Αρχική Οθόνη</a>
     </div>
 
     <script>
@@ -178,11 +187,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
                     professorList.innerHTML = '';
                     data.forEach(professor => {
                         const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td><input type="checkbox" name="professors[]" value="${professor.professor_id}"></td>
+                        row.innerHTML = 
+                            `<td><input type="checkbox" name="professors[]" value="${professor.professor_id}"></td>
                             <td>${professor.name}</td>
-                            <td>${professor.surname}</td>
-                        `;
+                            <td>${professor.surname}</td>`;
                         professorList.appendChild(row);
                     });
                 })
@@ -197,4 +205,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
 
 <?php
 $conn->close();
-?>
+?>  
