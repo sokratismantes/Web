@@ -1,11 +1,12 @@
 <?php
+session_start();
+
 // Σύνδεση με τη βάση δεδομένων
 $servername = "localhost";
 $username_db = "root";
 $password_db = "";
-$dbname = "vasst"; // Σωστή βάση δεδομένων
+$dbname = "vasst"; 
 
-// Δημιουργία σύνδεσης με τη βάση
 $conn = new mysqli($servername, $username_db, $password_db, $dbname);
 
 // Έλεγχος σύνδεσης
@@ -13,78 +14,75 @@ if ($conn->connect_error) {
     die("Η σύνδεση με τη βάση δεδομένων απέτυχε: " . $conn->connect_error);
 }
 
-// Διαχείριση υποβολής φόρμας και κλήση της procedure
+// Ελέγχουμε αν έγινε POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['professors'])) {
 
-
-    // Ανάκτηση του student_id με βάση το email του συνδεδεμένου φοιτητή
+    // **Ανάκτηση του student_id βάσει email**
     $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ? AND user_type = 'student'");
     $stmt->bind_param("s", $_SESSION['email']);
     $stmt->execute();
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
-    
+    $stmt->close();
+
     if ($user) {
-        $student_id = $user['user_id']; // Πρέπει να εμφανίζεται ο σωστός ID του φοιτητή
+        $student_id = $user['user_id'];
     } else {
         die("Σφάλμα: Δεν βρέθηκε ID φοιτητή.");
     }
+
+    // **Ανάκτηση του thesis_id του φοιτητή**
+    $stmt = $conn->prepare("SELECT thesis_id FROM theses WHERE student_id = ?");
+    $stmt->bind_param("i", $student_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $thesis = $result->fetch_assoc();
     $stmt->close();
-    
 
+    if ($thesis) {
+        $thesis_id = $thesis['thesis_id'];
+    } else {
+        die("Σφάλμα: Δεν βρέθηκε διπλωματική εργασία για τον φοιτητή.");
+    }
 
-// Ανάκτηση του thesis_id του φοιτητή
-$stmt = $conn->prepare("SELECT thesis_id FROM theses WHERE student_id = ?");
-$stmt->bind_param("i", $student_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$thesis = $result->fetch_assoc();
-
-if ($thesis) {
-    $thesis_id = $thesis['thesis_id']; // Πρέπει να εμφανίζεται ο σωστός ID της διπλωματικής
-} else {
-    die("Σφάλμα: Δεν βρέθηκε διπλωματική εργασία για τον φοιτητή.");
-}
-$stmt->close();
-
-
-
-    $conn->begin_transaction(); // Ξεκινάμε transaction για ασφάλεια
+    // **Ξεκινάμε transaction για ασφάλεια**
+    $conn->begin_transaction(); 
 
     try {
         foreach ($_POST['professors'] as $professor_id) {
+            // **Κλήση της stored procedure**
             $stmt = $conn->prepare("CALL SendInvitationToProfessor(?, ?, ?)");
             if ($stmt === false) {
-                die("Σφάλμα στην προετοιμασία του statement: " . $conn->error);
+                throw new Exception("Σφάλμα στην προετοιμασία του statement: " . $conn->error);
             }
-        
+
             $stmt->bind_param("iii", $student_id, $thesis_id, $professor_id);
             
             if (!$stmt->execute()) {
-                die("Σφάλμα στην εκτέλεση του statement: " . $stmt->error);
+                throw new Exception("Σφάλμα στην εκτέλεση της procedure: " . $stmt->error);
             }
-        
             $stmt->close();
-        
-            // Debugging: Έλεγχος αν αποθηκεύτηκε η ειδοποίηση
-            $check_stmt = $conn->prepare("SELECT * FROM professors_notifications WHERE professor_id = ? ORDER BY sent_at DESC LIMIT 1");
-            $check_stmt->bind_param("i", $professor_id);
+
+            // **Έλεγχος αν προστέθηκε η ειδοποίηση στον πίνακα professors_notifications**
+            $check_stmt = $conn->prepare("SELECT * FROM professors_notifications WHERE professor_id = ? AND student_id = ? AND thesis_id = ? ORDER BY sent_at DESC LIMIT 1");
+            $check_stmt->bind_param("iii", $professor_id, $student_id, $thesis_id);
             $check_stmt->execute();
             $result = $check_stmt->get_result();
-        
+
             if ($result->num_rows > 0) {
                 echo "<p style='color:green;'>Η ειδοποίηση καταχωρήθηκε επιτυχώς για τον καθηγητή $professor_id</p>";
             } else {
-                echo "<p style='color:red;'>Σφάλμα: Δεν αποθηκεύτηκε ειδοποίηση για τον καθηγητή $professor_id</p>";
+                throw new Exception("Σφάλμα: Δεν αποθηκεύτηκε ειδοποίηση για τον καθηγητή $professor_id");
             }
-        
+
             $check_stmt->close();
         }
-        
 
+        // **Commit εφόσον όλα πάνε καλά**
         $conn->commit();
         $message = "Οι προσκλήσεις στάλθηκαν επιτυχώς!";
     } catch (Exception $e) {
+        // **Rollback αν υπάρξει σφάλμα**
         $conn->rollback();
         $message = "Σφάλμα: " . $e->getMessage();
     }
@@ -135,10 +133,6 @@ $stmt->close();
         .submit-button:hover {
             background-color: #218838;
         }
-        .loading {
-            font-size: 1.2rem;
-            color: #555;
-        }
         .message {
             font-size: 1.2rem;
             color: green;
@@ -178,14 +172,8 @@ $stmt->close();
         document.addEventListener('DOMContentLoaded', function () {
             const professorList = document.getElementById('professor-list');
 
-            // Φόρτωση δεδομένων μέσω AJAX
             fetch('fetch_theses(epilogitrimelousepitropis).php')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Σφάλμα κατά την ανάκτηση δεδομένων');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     professorList.innerHTML = '';
                     data.forEach(professor => {
@@ -199,45 +187,14 @@ $stmt->close();
                     });
                 })
                 .catch(error => {
-                    professorList.innerHTML = `
-                        <tr>
-                            <td colspan="3" class="loading">${error.message}</td>
-                        </tr>
-                    `;
+                    professorList.innerHTML = `<tr><td colspan="3" class="loading">${error.message}</td></tr>`;
                 });
         });
     </script>
-
-<script>
-    document.querySelector('form').addEventListener('submit', function (event) {
-        event.preventDefault(); // Αποτροπή ανανέωσης σελίδας
-
-        const formData = new FormData(this);
-
-        fetch('', { // Αποστολή στο ίδιο αρχείο
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.text()) // Λήψη απάντησης
-        .then(data => {
-            // Εμφάνιση μηνύματος
-            alert("Οι προσκλήσεις στάλθηκαν επιτυχώς!");
-
-            // Επαναφορά φόρμας αν η αποστολή ήταν επιτυχής
-            document.querySelector('form').reset();
-        })
-        .catch(error => {
-            console.error('Σφάλμα:', error);
-            alert('Παρουσιάστηκε σφάλμα κατά την αποστολή.');
-        });
-    });
-</script>
 
 </body>
 </html>
 
 <?php
-// Κλείσιμο σύνδεσης με τη βάση
 $conn->close();
 ?>
-
