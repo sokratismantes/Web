@@ -254,18 +254,81 @@ footer {
 }
 
 
+#form-notifications-popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 1000;
+}
+
+#form-notifications-popup h3 {
+    margin-top: 0;
+    color: #28a745;
+}
+
+#form-notifications-popup ul {
+    list-style: none;
+    padding: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#form-notifications-popup ul li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+#form-notifications-popup ul li a {
+    text-decoration: none;
+    color: #333;
+}
+
+#form-notifications-popup ul li a:hover {
+    color: #007bff;
+}
+
+#form-notifications-popup .close-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#form-notifications-popup .close-btn:hover {
+    background-color: #c82333;
+}
+
+
     </style>
 </head>
 <body>
-    <div class="header">
-        <a href="profile_edit.php">
-            <img src="User_image.png" alt="User Icon">
-            <span id="welcomeMessage">Καλώς ήλθατε, Χρήστη!</span>
-        </a>
+    
+<div class="header">
+    <a href="profile_edit.php" class="user-info">
+        <img src="User_image.png" alt="User Icon">
+        <span id="welcomeMessage">Καλώς ήλθατε, Χρήστη!</span>
+    </a>
+    <div class="notifications-container">
         <button class="notifications-button" onclick="showNotifications()">🔔</button>
-        <button class="logout-button" onclick="logout()">Αποσύνδεση</button>
+        <button class="notifications-button form-notifications-button" onclick="showFormNotifications()">📩</button>
     </div>
+    <button class="logout-button" onclick="logout()">Αποσύνδεση</button>
+</div>
 
+
+    
 
     <div class="container">
         <h2>Πίνακας Έλεγχου Καθηγητή</h2>
@@ -276,15 +339,24 @@ footer {
     </div>
 
 
-    <div id="overlay"></div>
+ <div id="overlay"></div>
     <div id="notifications-popup">
         <h3>Ειδοποιήσεις</h3>
-        <div id="notifications-list">
+    <div id="notifications-list">
     <!-- Οι ειδοποιήσεις θα φορτώνονται δυναμικά εδώ -->
-</div>
+ </div>
 
         <button class="close-btn" onclick="closeNotifications()">Κλείσιμο</button>
     </div>
+
+    <!-- Popup για Ειδοποιήσεις από τη Φόρμα -->
+<div id="form-notifications-popup">
+    <h3>Μηνύματα από τη Φόρμα</h3>
+    <div id="form-notifications-list">
+        <!-- Οι ειδοποιήσεις θα φορτώνονται δυναμικά εδώ -->
+    </div>
+    <button class="close-btn" onclick="closeFormNotifications()">Κλείσιμο</button>
+</div>
 
 
     <script>
@@ -355,6 +427,47 @@ footer {
     });
 
 }
+
+function showFormNotifications() {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('notifications-popup').style.display = 'block';
+
+    fetch('fetch_form_notifications.php')
+    .then(response => response.json())
+    .then(data => {
+        const notificationsList = document.getElementById('notifications-list');
+        notificationsList.innerHTML = '';
+
+        if (data.length > 0) {
+            let notificationsHTML = '';
+
+            data.forEach(notification => {
+                notificationsHTML += `
+                    <li>
+                        <strong>${notification.student_name} ${notification.student_surname}</strong> - 
+                        <em>${notification.thesis_title}</em><br>
+                        <strong>Θέμα:</strong> ${notification.topic} <br>
+                        <strong>Μήνυμα:</strong> ${notification.message} <br>
+                        <small>Ημερομηνία: ${notification.created_at}</small>
+                    </li>`;
+            });
+
+            notificationsList.innerHTML = notificationsHTML;
+        } else {
+            notificationsList.innerHTML = '<li>Δεν υπάρχουν νέες ειδοποιήσεις.</li>';
+        }
+    })
+    .catch(error => {
+        notificationsList.innerHTML = `<li>Σφάλμα: ${error.message}</li>`;
+    });
+}
+
+
+function closeFormNotifications() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('form-notifications-popup').style.display = 'none';
+}
+
 
 function markAsRead(notificationId) {
     fetch('mark_notification_as_read.php', {
