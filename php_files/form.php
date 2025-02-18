@@ -20,6 +20,46 @@ try {
 } catch (PDOException $e) {
     die("Σφάλμα σύνδεσης με τη βάση δεδομένων: " . $e->getMessage());
 }
+
+// **Διαχείριση του POST Request και Κλήση της Stored Procedure**
+$message = "";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    try {
+        // Ανάκτηση του student_id βάσει του email
+        $stmt = $pdo->prepare("SELECT user_id FROM users WHERE email = ? AND user_type = 'student'");
+        $stmt->execute([$_SESSION['email']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            throw new Exception("Σφάλμα: Δεν βρέθηκε ID φοιτητή.");
+        }
+
+        $student_id = $user['user_id'];
+
+        // Ανάκτηση του thesis_id του φοιτητή
+        $stmt = $pdo->prepare("SELECT thesis_id FROM theses WHERE student_id = ?");
+        $stmt->execute([$student_id]);
+        $thesis = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$thesis) {
+            throw new Exception("Σφάλμα: Δεν βρέθηκε διπλωματική εργασία για τον φοιτητή.");
+        }
+
+        $thesis_id = $thesis['thesis_id'];
+        $professor_id = $_POST['professor'];
+        $topic = $_POST['subject'];
+        $message_text = $_POST['message'];
+
+        // Κλήση της Stored Procedure
+        $stmt = $pdo->prepare("CALL SendFormInvitationToProfessor(?, ?, ?, ?, ?)");
+        $stmt->execute([$student_id, $thesis_id, $professor_id, $topic, $message_text]);
+
+        $message = "Η πρόσκληση στάλθηκε επιτυχώς!";
+    } catch (Exception $e) {
+        $message = "Σφάλμα: " . $e->getMessage();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -112,19 +152,18 @@ try {
             color: #721c24;
         }
     </style>
-    <script>
-        function showNotification(message, isError = false) {
-            const notification = document.querySelector('.notification');
-            notification.textContent = message;
-            notification.className = `notification ${isError ? 'error' : ''}`;
-            notification.style.display = 'block';
-        }
-    </script>
 </head>
 <body>
 <div class="container">
     <h1>Αποστολή Πρόσκλησης</h1>
-    <form action="receive.php" method="POST" onsubmit="return handleSubmit(event)">
+
+    <?php if (!empty($message)): ?>
+        <div class="notification" style="display: block; <?php echo strpos($message, 'Σφάλμα') !== false ? 'background-color: #f8d7da; color: #721c24;' : ''; ?>">
+            <?php echo $message; ?>
+        </div>
+    <?php endif; ?>
+
+    <form method="POST">
         <label for="professor">Επιλογή Καθηγητή:</label>
         <select name="professor" id="professor" required>
             <option value="" disabled selected>Επιλέξτε...</option>
@@ -143,27 +182,6 @@ try {
 
         <button type="submit">Αποστολή Πρόσκλησης</button>
     </form>
-    <div class="notification"></div>
 </div>
-<script>
-    function handleSubmit(event) {
-        event.preventDefault();
-
-        const formData = new FormData(event.target);
-
-        fetch('receive.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.text())
-        .then(data => {
-            showNotification('Η πρόσκληση στάλθηκε επιτυχώς!');
-            event.target.reset();
-        })
-        .catch(error => {
-            showNotification('Παρουσιάστηκε σφάλμα κατά την αποστολή της πρόσκλησης.', true);
-        });
-    }
-</script>
 </body>
 </html>
