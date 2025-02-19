@@ -217,6 +217,16 @@ BEGIN
 END //
 DELIMITER ;
 
+19: CREATE TABLE presentations (
+    presentation_id INT AUTO_INCREMENT PRIMARY KEY,
+    thesis_id INT NOT NULL,
+    exam_date DATE NOT NULL,
+    exam_time TIME NOT NULL,
+    exam_type ENUM('δια ζώσης', 'διαδικτυακά') NOT NULL,
+    location TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (thesis_id) REFERENCES theses(thesis_id) ON DELETE CASCADE
+);
 
 
 ΑΡΧΙΚΗ ΒΑΣΗ 
