@@ -25,18 +25,19 @@ DELIMITER ;
 (στο process)
 2:
 DELIMITER $$
+
 CREATE PROCEDURE DeleteThesis(
-IN p_thesis_id INT
+    IN p_thesis_id INT
 )
 BEGIN
--- Αποθήκευση της διαγραφής στον πίνακα Deleted_Theses για ιστορικό
-INSERT INTO Deleted_Theses (thesis_id, title, deleted_at)
-SELECT thesis_id, title, NOW() FROM Theses WHERE thesis_id = p_thesis_id;
+    -- Αποθήκευση της διαγραφής στον πίνακα Deleted_Theses
+    INSERT INTO Deleted_Theses (thesis_id, title, supervisor_id, deleted_at)
+    SELECT thesis_id, title, supervisor_id, NOW() FROM Theses WHERE thesis_id = p_thesis_id;
 
     -- Διαγραφή της διπλωματικής
-     DELETE FROM Theses WHERE thesis_id = p_thesis_id;
-
+    DELETE FROM Theses WHERE thesis_id = p_thesis_id;
 END $$
+
 DELIMITER ;
 
 (Στο addthesis)
