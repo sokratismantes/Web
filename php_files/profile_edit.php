@@ -8,7 +8,6 @@ if (!isset($_SESSION['email'])) {
 }
 
 $email = $_SESSION['email'];
-$userData = null;
 
 // Σύνδεση με τη βάση δεδομένων
 $servername = "localhost";
@@ -17,13 +16,12 @@ $password_db = "";
 $dbname = "vasst";
 
 $conn = new mysqli($servername, $username_db, $password_db, $dbname);
-
 if ($conn->connect_error) {
     die("Η σύνδεση με τη βάση δεδομένων απέτυχε: " . $conn->connect_error);
 }
 
 // Ανάκτηση τύπου χρήστη και δεδομένων
-$sql = "SELECT user_type FROM users WHERE email = ?";
+$sql = "SELECT user_type, user_id FROM users WHERE email = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $email);
 $stmt->execute();
@@ -32,57 +30,26 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
     $user_type = $row['user_type'];
-
-    switch ($user_type) {
-        case 'student':
-            $sql = "SELECT * FROM students INNER JOIN users ON students.student_id = users.user_id WHERE users.email = ?";
-            break;
-        case 'professor':
-            $sql = "SELECT * FROM professors INNER JOIN users ON professors.professor_id = users.user_id WHERE users.email = ?";
-            break;
-        case 'secretary':
-            $sql = "SELECT * FROM grammateia INNER JOIN users ON grammateia.grammateia_id = users.user_id WHERE users.email = ?";
-            break;
-    }
-
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $userData = $result->fetch_assoc();
-    }
+    $user_id = $row['user_id'];
 } else {
     die("Δεν βρέθηκαν στοιχεία για τον συνδεδεμένο χρήστη.");
 }
 
-$conn->close();
+$stmt->close();
 
-// Ενημέρωση δεδομένων αν υποβληθεί η φόρμα
-// Ενημέρωση δεδομένων αν υποβληθεί η φόρμα
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $conn = new mysqli($servername, $username_db, $password_db, $dbname);
-    if ($conn->connect_error) {
-        die("Η σύνδεση με τη βάση δεδομένων απέτυχε: " . $conn->connect_error);
-    }
-
-    $sql = "CALL UpdateUserProfile(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-
-    // Προετοιμασία των μεταβλητών
-    $user_id = $userData['student_id'] ?? $userData['professor_id'] ?? $userData['grammateia_id'];
     $street = $_POST['street'] ?? null;
     $number = $_POST['number'] ?? null;
     $city = $_POST['city'] ?? null;
     $postcode = $_POST['postcode'] ?? null;
-    $mobile = $_POST['mobile'] ?? $_POST['mobile_telephone'] ?? null;
-    $landline = $_POST['landline'] ?? $_POST['landline_telephone'] ?? null;
+    $mobile = $_POST['mobile_telephone'] ?? $_POST['mobile'] ?? null;
+    $landline = $_POST['landline_telephone'] ?? $_POST['landline'] ?? null;
     $department = $_POST['department'] ?? null;
     $university = $_POST['university'] ?? null;
     $phone = $_POST['phone'] ?? null;
 
-    // Δέσιμο των παραμέτρων με την procedure
+    // Κλήση της Stored Procedure
+    $stmt = $conn->prepare("CALL UpdateUserProfile(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param(
         "issssssssss",
         $user_id,
@@ -99,17 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     );
 
     if ($stmt->execute()) {
-        $stmt->close();
-        $conn->close();
         echo "<script>
                 alert('Τα στοιχεία ενημερώθηκαν με επιτυχία!');
                 window.location.href = 'student_home.php';
               </script>";
-        exit();
+    } else {
+        echo "Σφάλμα: " . $stmt->error;
     }
-    
-    
-  
 
     $stmt->close();
     $conn->close();
