@@ -66,9 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     );
 
     if ($stmt->execute()) {
+        // Ορισμός σελίδας ανακατεύθυνσης βάσει τύπου χρήστη
+        $redirectPage = ($user_type === 'student') ? 'student_home.php' : (($user_type === 'professor') ? 'professor_home.php' : 'secretary_home.php');
+
         echo "<script>
                 alert('Τα στοιχεία ενημερώθηκαν με επιτυχία!');
-                window.location.href = 'student_home.php';
+                window.location.href = '$redirectPage';
               </script>";
     } else {
         echo "Σφάλμα: " . $stmt->error;
@@ -77,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
     $conn->close();
 }
+
 
 ?>
 
