@@ -178,6 +178,46 @@ END $$
 
 DELIMITER ;
 
+18: DELIMITER //
+CREATE PROCEDURE UpdateUserProfile(
+    IN p_user_id INT,
+    IN p_user_type VARCHAR(20),
+    IN p_street VARCHAR(255),
+    IN p_number VARCHAR(10),
+    IN p_city VARCHAR(100),
+    IN p_postcode VARCHAR(20),
+    IN p_mobile_phone VARCHAR(20),
+    IN p_landline_phone VARCHAR(20),
+    IN p_department VARCHAR(100),
+    IN p_university VARCHAR(100),
+    IN p_phone VARCHAR(20)
+)
+BEGIN
+    IF p_user_type = 'student' THEN
+        UPDATE students 
+        SET street = p_street, 
+            number = p_number, 
+            city = p_city, 
+            postcode = p_postcode, 
+            mobile_telephone = p_mobile_phone, 
+            landline_telephone = p_landline_phone
+        WHERE student_id = p_user_id;
+    ELSEIF p_user_type = 'professor' THEN
+        UPDATE professors 
+        SET mobile = p_mobile_phone, 
+            landline = p_landline_phone, 
+            department = p_department, 
+            university = p_university
+        WHERE professor_id = p_user_id;
+    ELSEIF p_user_type = 'secretary' THEN
+        UPDATE grammateia 
+        SET phone = p_phone
+        WHERE grammateia_id = p_user_id;
+    END IF;
+END //
+DELIMITER ;
+
+
 
 ΑΡΧΙΚΗ ΒΑΣΗ 
 
