@@ -212,6 +212,29 @@ try {
             padding: 15px;
             margin-top: 20px;
         }
+
+
+        .back-to-list-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-to-list-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-to-list-button:hover {
+            background-color: #0056b3;
+        }
+
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -321,7 +344,7 @@ searchForm.addEventListener("submit", function (e) {
         </form>
     </div>
 
-    <a href="student_dip_statuscheck.php" class="action-button">Διαχείριση Διπλωματικής Εργασίας</a>
+    <a href="student_action.php" class="action-button">Διαχείριση Διπλωματικής Εργασίας</a>
     <a href="epilogitrimelousepitropis.php" class="action-button" style="background-color:rgb(0, 123, 255);">Επιλογή Τριμελούς Επιτροπής</a>
     <a href="form.php" class="action-button" style="background-color: #007bff;">Πρόσκληση Καθηγητή</a>
 
@@ -350,6 +373,13 @@ searchForm.addEventListener("submit", function (e) {
         </tbody>
     </table>
 </div>
+
+<?php if (!empty($theses)): ?>
+    <div class="back-to-list-container">
+        <a href="student_home.php" class="back-to-list-button">Επιστροφή στην Αρχική Λίστα</a>
+    </div>
+<?php endif; ?>
+
 
 <div id="chatbot-toggle" onclick="toggleChatbot()">💬</div>
 <div id="chatbot-body">
@@ -453,7 +483,6 @@ searchForm.addEventListener("submit", function (e) {
     <p>Email: secretary@ceid.upatras.gr | Τηλ: 2610996939, 2610996940, 2610996941</p>
 </footer>
 <script>
-let chatbotVisible = false;
 
 function toggleChatbot() {
     chatbotVisible = !chatbotVisible;
@@ -467,7 +496,7 @@ function handleQuestion(question) {
 
 function addChatMessage(sender, message) {
     const messageContainer = document.createElement("div");
-    messageContainer.textContent = ${sender}: ${message};
+    messageContainer.textContent = `${sender}: ${message}`;
     messageContainer.style.margin = "5px 0";
     document.getElementById("chatbot-messages").appendChild(messageContainer);
 }
