@@ -1,29 +1,35 @@
 (Στο process)
-$$$$DELIMITER $$
+    DROP PROCEDURE IF EXISTS UpdateThesis;
+DELIMITER $$
 
 CREATE PROCEDURE UpdateThesis(
     IN p_thesis_id INT,
     IN p_title VARCHAR(255),
     IN p_description TEXT,
-    IN p_status ENUM('Υπό Ανάθεση','Ενεργή','Υπό Εξέταση','Περατωμένη'),
+    IN p_status VARCHAR(50),
     IN p_start_date DATE,
     IN p_end_date DATE
 )
 BEGIN
+    -- Ενημέρωση της Διπλωματικής
     UPDATE Theses
-    SET title = p_title, 
-        description = p_description, 
-        status = p_status, 
-        start_date = p_start_date, 
-        end_date = p_end_date,
-        last_updated = NOW()
+    SET title = p_title,
+        description = p_description,
+        status = p_status,
+        start_date = p_start_date,
+        end_date = p_end_date
     WHERE thesis_id = p_thesis_id;
+
+    -- Καταγραφή στο ιστορικό αλλαγών (thesislogs)
+    INSERT INTO thesislogs (thesis_id, thesis_title, action, log_timestamp, reason, action_date)
+    VALUES (p_thesis_id, p_title, 'Update', NOW(), 'Ενημέρωση πληροφοριών διπλωματικής', NOW());
 END $$
 
 DELIMITER ;
 
 (στο process)
 2:
+DROP PROCEDURE IF EXISTS DeleteThesis;
 DELIMITER $$
 
 CREATE PROCEDURE DeleteThesis(
@@ -31,8 +37,13 @@ CREATE PROCEDURE DeleteThesis(
 )
 BEGIN
     -- Αποθήκευση της διαγραφής στον πίνακα Deleted_Theses
-    INSERT INTO Deleted_Theses (thesis_id, title, supervisor_id, deleted_at)
-    SELECT thesis_id, title, supervisor_id, NOW() FROM Theses WHERE thesis_id = p_thesis_id;
+    INSERT INTO Deleted_Theses (thesis_id, title, supervisor_id, gs_number, deleted_at)
+    SELECT thesis_id, title, supervisor_id, gs_number, NOW() 
+    FROM Theses WHERE thesis_id = p_thesis_id;
+
+    -- Καταγραφή στο ιστορικό αλλαγών (thesislogs)
+    INSERT INTO thesislogs (thesis_id, thesis_title, action, log_timestamp, reason, action_date)
+    VALUES (p_thesis_id, (SELECT title FROM Theses WHERE thesis_id = p_thesis_id), 'Delete', NOW(), 'Διαγραφή διπλωματικής', NOW());
 
     -- Διαγραφή της διπλωματικής
     DELETE FROM Theses WHERE thesis_id = p_thesis_id;
