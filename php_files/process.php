@@ -58,6 +58,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bindParam(':end_date', $end_date);
         
 
+        
+
         if ($stmt->execute()) {
             $message = "Οι αλλαγές αποθηκεύτηκαν επιτυχώς!";
         } else {
@@ -269,4 +271,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </script>
 </body>
 </html>
-
