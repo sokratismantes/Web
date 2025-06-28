@@ -469,3 +469,103 @@ INSERT INTO `committeeinvitations` (`invitation_id`, `thesis_id`, `invited_profe
 (8, 5, 211, 'Accepted', '2025-02-01 07:30:00', '2025-02-01 12:00:00', 'Ευχαριστώ. Είμαι διαθέσιμος για τη συνεδρία.'),
 (9, 7, 200, 'Accepted', '2025-02-15 08:00:00', '2025-02-16 06:00:00', 'Επιβεβαιώνω τη συμμετοχή μου στην επιτροπή.'),
 (10, 11, 218, 'Accepted', '2025-01-18 10:00:00', '2025-01-19 08:00:00', 'Θα συμμετάσχω.');
+
+ΑΛΛΑΓΕΣ ΓΙΑ ΓΡΑΜΜΑΤΕΙΑ:
+1Γ. 
+
+DELIMITER //
+
+CREATE PROCEDURE cancelThesis(
+    IN p_thesis_id INT,
+    IN p_reason TEXT,
+    IN p_gs_number INT,
+    IN p_gs_year INT
+)
+BEGIN
+    -- Εισαγωγή στο log
+    INSERT INTO ThesisLogs (thesis_id, action, reason, gs_number, gs_year)
+    VALUES (p_thesis_id, 'Ακύρωση', p_reason, p_gs_number, p_gs_year);
+
+    -- Αντί για DELETE, κάνουμε UPDATE της κατάστασης
+    UPDATE Theses
+    SET status = 'Ακυρωμένη'
+    WHERE thesis_id = p_thesis_id;
+END //
+
+DELIMITER ;
+
+
+
+2Γ. 
+
+DELIMITER //
+
+CREATE PROCEDURE completeThesis(
+    IN p_thesis_id INT
+)
+BEGIN
+    UPDATE Theses
+    SET status = 'Περατωμένη'
+    WHERE thesis_id = p_thesis_id;
+
+    INSERT INTO ThesisLogs (thesis_id, action)
+    VALUES (p_thesis_id, 'Ολοκλήρωση');
+END //
+
+DELIMITER ;
+
+ 
+
+3Γ. ALTER TABLE thesislogs
+DROP FOREIGN KEY thesislogs_ibfk_1;
+
+4Γ.ALTER TABLE thesislogs
+MODIFY COLUMN thesis_id INT NULL;
+
+5Γ. ALTER TABLE thesislogs
+ADD CONSTRAINT thesislogs_ibfk_1
+FOREIGN KEY (thesis_id) REFERENCES theses(thesis_id)
+ON DELETE SET NULL;
+
+
+
+6Γ. INSERT INTO `theses` (`thesis_id`, `title`, `description`, `status`, `start_date`, `end_date`, `student_id`, `supervisor_id`, `repository_link`, `cancellation_reason`, `approval_gs_number`) VALUES
+(20, 'Εφαρμογή Τεχνητής Νοημοσύνης σε Δίκτυα', 'Ανάπτυξη AI για βελτιστοποίηση δικτύων.', 'Υπό Εξέταση', '2025-06-01', NULL, 120, 200, NULL, NULL, '2024/012'),
+(21, 'Ανάπτυξη Εφαρμογών Blockchain', 'Χρήση blockchain για ασφαλείς συναλλαγές.', 'Υπό Εξέταση', '2025-07-01', NULL, 121, 205, 'https://repository.university.gr/thesis/21', NULL, '2024/013'),
+(22, 'Μηχανική Μάθηση για Ανίχνευση Κακόβουλου Λογισμικού', 'Χρήση ML για εντοπισμό malware.', 'Υπό Εξέταση', '2025-05-15', NULL, 122, 207, NULL, NULL, '2024/014'),
+(23, 'Ανάλυση Οικονομικών Δεδομένων με AI', 'Εφαρμογή AI για οικονομικές προβλέψεις.', 'Υπό Εξέταση', '2025-04-20', NULL, 123, 218, 'https://repository.university.gr/thesis/23', NULL, '2024/015'),
+(24, 'Ρομποτική για Βιοϊατρικές Εφαρμογές', 'Ανάπτυξη ρομπότ για ιατρική χρήση.', 'Υπό Εξέταση', '2025-03-10', NULL, 124, 211, NULL, NULL, '2024/016');
+
+7Γ. DROP TRIGGER IF EXISTS after_thesis_update;
+8Γ. DROP TRIGGER IF EXISTS after_thesis_delete;
+
+9Γ. UPDATE `theses` 
+SET `grade` = 8.5, 
+    `repository_link` = 'https://repository.university.gr/thesis/20'
+WHERE `thesis_id` = 20;
+
+UPDATE `theses` 
+SET `grade` = 9.0 
+WHERE `thesis_id` = 21;
+
+UPDATE `theses` 
+SET `grade` = 8.7, 
+    `repository_link` = 'https://repository.university.gr/thesis/22'
+WHERE `thesis_id` = 22;
+
+UPDATE `theses` 
+SET `grade` = 9.2 
+WHERE `thesis_id` = 23;
+
+UPDATE `theses` 
+SET `grade` = 9.5, 
+    `repository_link` = 'https://repository.university.gr/thesis/24'
+WHERE `thesis_id` = 24;
+
+UPDATE `theses` 
+SET `repository_link` = CONCAT('https://repository.university.gr/thesis/', `thesis_id`)
+WHERE `thesis_id` BETWEEN 20 AND 24;
+
+
+
+
