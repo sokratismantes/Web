@@ -71,61 +71,46 @@ $current_date = new DateTime();
 $interval = $start_date->diff($current_date);
 $elapsed_time = $interval->format('%y έτη, %m μήνες, %d ημέρες');
 
+$message = "";
 
-
+// Χειρισμός ακύρωσης
 if (isset($_POST['cancel'])) {
-    // Έλεγχος και ανάκτηση δεδομένων από τη φόρμα
     $cancelation_reason = isset($_POST['cancelation_reason']) ? $conn->real_escape_string($_POST['cancelation_reason']) : null;
     $cancel_gs_number = isset($_POST['cancel_gs_number']) ? intval($_POST['cancel_gs_number']) : 0;
     $cancel_gs_year = isset($_POST['cancel_gs_year']) ? intval($_POST['cancel_gs_year']) : 0;
 
-    // Έλεγχος αν το πεδίο cancelation_reason είναι κενό
     if (empty($cancelation_reason)) {
         echo "<script>alert('Παρακαλώ εισάγετε τον λόγο ακύρωσης.');</script>";
         exit();
     }
 
-    // Καταγραφή της ακύρωσης στο log πριν από τη διαγραφή
-    $log_sql = "INSERT INTO ThesisLogs (thesis_id, action, reason, gs_number, gs_year) 
-                VALUES ($thesis_id, 'Ακύρωση', '$cancelation_reason', $cancel_gs_number, $cancel_gs_year)";
-    
-    if ($conn->query($log_sql) === TRUE) {
-        // Διαγραφή της διπλωματικής από τον πίνακα Theses
-        $delete_sql = "DELETE FROM Theses WHERE thesis_id = $thesis_id";
-        
-        if ($conn->query($delete_sql) === TRUE) {
-            $message = "Η ανάθεση ακυρώθηκε επιτυχώς!";
-            header("Location: grammateia_home.php");
-            exit();
-        } else {
-            echo "<script>alert('Σφάλμα κατά τη διαγραφή: " . $conn->error . "');</script>";
-        }
+    $stmt = $conn->prepare("CALL cancelThesis(?, ?, ?, ?)");
+    $stmt->bind_param("isii", $thesis_id, $cancelation_reason, $cancel_gs_number, $cancel_gs_year);
+
+    if ($stmt->execute()) {
+        header("Location: grammateia_home.php");
+        exit();
     } else {
-        echo "<script>alert('Σφάλμα κατά την καταγραφή της ακύρωσης: " . $conn->error . "');</script>";
+        echo "<script>alert('Σφάλμα κατά την εκτέλεση της ακύρωσης: " . $conn->error . "');</script>";
     }
 }
 
+// Χειρισμός ολοκλήρωσης
+if (isset($_POST['complete'])) {
+    $stmt = $conn->prepare("CALL completeThesis(?)");
+    $stmt->bind_param("i", $thesis_id);
 
-
-    if (isset($_POST['complete'])) {
-        $status = "Περατωμένη";
-
-        $complete_sql = "UPDATE Theses SET status = '$status' WHERE thesis_id = $thesis_id";
-
-        if ($conn->query($complete_sql) === TRUE) {
-            $message = "Η κατάσταση άλλαξε σε 'Περατωμένη' επιτυχώς!";
-            header("Location: grammateia_home.php");
-            exit();
-        } else {
-            $message = "Σφάλμα κατά την ενημέρωση: " . $conn->error;
-        }
+    if ($stmt->execute()) {
+        header("Location: grammateia_home.php");
+        exit();
+    } else {
+        $message = "Σφάλμα κατά την ενημέρωση: " . $conn->error;
     }
-
-
-
+}
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="el">
@@ -142,7 +127,10 @@ $conn->close();
             color: #333;
         }
 
-        
+        .status.cancelled {
+        color: red;
+}
+
 
         .container {
             margin: 50px auto;
@@ -254,9 +242,26 @@ $conn->close();
             <div class="readonly-field" id="description"> <?php echo $thesis['description']; ?> </div>
 
             <label>Τρέχουσα Κατάσταση:</label>
-            <p class="status <?php echo $thesis['status'] == 'Ενεργή' ? 'active' : 'pending'; ?>">
-                <?php echo $thesis['status']; ?>
-            </p>
+            <?php
+            $status_class = '';
+            switch ($thesis['status']) {
+            case 'Ενεργή':
+            $status_class = 'active';
+            break;
+            case 'Υπό Εξέταση':
+            $status_class = 'pending';
+            break;
+            case 'Ακυρωμένη':
+        $status_class = 'cancelled';
+        break;
+    default:
+        $status_class = '';
+}
+?>
+<p class="status <?php echo $status_class; ?>">
+    <?php echo htmlspecialchars($thesis['status']); ?>
+</p>
+
 
                 
             </select>
