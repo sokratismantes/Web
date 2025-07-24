@@ -221,12 +221,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
             <label for="status">Κατάσταση:</label>
-            <select id="status" name="status" required>
-                <option value="Υπό Ανάθεση">Υπό Ανάθεση</option>
-                <option value="Ενεργή">Ενεργή</option>
-                <option value="Υπό Εξέταση">Υπό Εξέταση</option>
-                <option value="Περατωμένη">Περατωμένη</option>
-            </select>
+<select id="status" name="status" required>
+    <option value="Υπό Ανάθεση">Υπό Ανάθεση</option>
+    <option value="Ενεργή">Ενεργή</option>
+    <option value="Περατωμένη">Περατωμένη</option>
+    <option value="Ακυρωμένη">Ακυρωμένη</option>
+</select>
+
 
 
             <label for="start_date">Ημερομηνία Έναρξης:</label>
