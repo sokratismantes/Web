@@ -1,45 +1,78 @@
 <?php
 session_start();
+header('Content-Type: application/json');
 
 // Έλεγχος αν ο χρήστης έχει συνδεθεί
 if (!isset($_SESSION['email'])) {
-    header("Location: login.php");
+    echo json_encode(["error" => "Δεν έχετε συνδεθεί"]);
     exit();
 }
 
-// Σύνδεση με τη βάση δεδομένων
-$servername = "localhost";
-$username_db = "root";
-$password_db = "";
-$dbname = "vasst";
+// Σύνδεση με τη βάση δεδομένων μέσω PDO
+$dsn = "mysql:host=localhost;dbname=vasst;charset=utf8mb4";
+$pdo = new PDO($dsn, "root", "");
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$conn = new mysqli($servername, $username_db, $password_db, $dbname);
+// Ανάκτηση του user_id του καθηγητή
+$stmt = $pdo->prepare("SELECT user_id FROM users WHERE email = ? AND user_type = 'professor'");
+$stmt->execute([$_SESSION['email']]);
+$professor = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($conn->connect_error) {
-    die(json_encode(["error" => "Η σύνδεση με τη βάση δεδομένων απέτυχε"]));
+if (!$professor) {
+    echo json_encode(["error" => "Δεν βρέθηκε καθηγητής με αυτό το email"]);
+    exit();
 }
 
-$conn->set_charset("utf8");
+$professor_id = $professor['user_id'];
 
-// Λήψη παραμέτρου αναζήτησης
-$search = isset($_GET['search']) ? $conn->real_escape_string($_GET['search']) : '';
+// Λήψη παραμέτρων
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$status = isset($_GET['status']) ? $_GET['status'] : '';
+$role = isset($_GET['role']) ? $_GET['role'] : '';
 
-// Ανάκτηση θεμάτων
-$sql = "SELECT thesis_id, title, status, start_date, end_date, supervisor_id 
-        FROM Theses 
-        WHERE title LIKE '%$search%' 
-        OR status LIKE '%$search%' 
-        ORDER BY thesis_id ASC";
-$result = $conn->query($sql);
+// Βασικό query
+$sql = "SELECT DISTINCT t.*
+        FROM Theses t
+        LEFT JOIN Committees c ON t.thesis_id = c.thesis_id
+        WHERE 1=1 ";
 
-$theses = [];
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $theses[] = $row;
-    }
+$params = [];
+
+// Ανά ρόλο
+if ($role === 'supervisor') {
+    $sql .= " AND t.supervisor_id = :pid";
+    $params['pid'] = $professor_id;
+} elseif ($role === 'committee') {
+    $sql .= " AND (c.member1_id = :pid OR c.member2_id = :pid)";
+    $params['pid'] = $professor_id;
+} elseif ($role === '') {
+    // Δεν φιλτράρουμε με βάση ρόλο: Δείξε όλες τις διπλωματικές (αφαιρούμε τελείως το φίλτρο professor)
+    // Δεν προσθέτουμε τίποτα εδώ!
+} else {
+    // Από προεπιλογή, δείξε μόνο τις δικές του (αν μπει ποτέ άκυρη τιμή στο role)
+    $sql .= " AND (t.supervisor_id = :pid OR c.member1_id = :pid OR c.member2_id = :pid)";
+    $params['pid'] = $professor_id;
 }
 
-$conn->close();
 
-header('Content-Type: application/json');
-echo json_encode($theses);
+// Αν επιλέχθηκε κατάσταση
+if (!empty($status)) {
+    $sql .= " AND t.status = :status";
+    $params['status'] = $status;
+}
+
+// Αν υπάρχει αναζήτηση
+if (!empty($search)) {
+    $sql .= " AND (t.title LIKE :search OR t.status LIKE :search)";
+    $params['search'] = "%$search%";
+}
+
+$sql .= " ORDER BY t.thesis_id ASC";
+
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Επιστροφή ως JSON
+echo json_encode($results);
