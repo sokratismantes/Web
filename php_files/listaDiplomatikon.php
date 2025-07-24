@@ -164,10 +164,26 @@ if (isset($_SESSION['success_message'])) {
 
         <h1>Λίστα Διπλωματικών</h1>
 
-        <div class="search-bar">
-            <input type="text" id="search" placeholder="Αναζήτηση διπλωματικών..." onkeyup="fetchTheses()">
-            <button onclick="fetchTheses()">Αναζήτηση</button>
-        </div>
+<div class="search-bar">
+    <input type="text" id="search" placeholder="Αναζήτηση διπλωματικών..." onkeyup="fetchTheses()">
+
+    <select id="statusFilter" onchange="fetchTheses()">
+        <option value="">Όλες οι Καταστάσεις</option>
+        <option value="Υπό Ανάθεση">Υπό Ανάθεση</option>
+        <option value="Ενεργή">Ενεργή</option>
+        <option value="Περατωμένη">Περατωμένη</option>
+        <option value="Ακυρωμένη">Ακυρωμένη</option>
+    </select>
+
+    <select id="roleFilter" onchange="fetchTheses()">
+        <option value="">Όλοι οι Ρόλοι</option>
+        <option value="supervisor">Ως Επιβλέπων</option>
+        <option value="committee">Ως Τριμελής</option>
+    </select>
+
+    <button onclick="fetchTheses()">Αναζήτηση</button>
+</div>
+
 
         <a href="addThesis.php" class="add-button">Προσθήκη Νέου Θέματος</a>
 
@@ -195,38 +211,48 @@ if (isset($_SESSION['success_message'])) {
     </div>
 
     <script>
-        function fetchTheses() {
-            const search = document.getElementById('search').value.trim();
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', `fetch_theses(listaDiplomatikon).php?search=${encodeURIComponent(search)}`, true);
-            xhr.onload = function () {
-                if (xhr.status === 200) {
-                    try {
-                        const theses = JSON.parse(xhr.responseText);
-                        const tableBody = document.querySelector('#theses-table tbody');
-                        tableBody.innerHTML = '';
-                        if (theses.length > 0) {
-                            theses.forEach(thesis => {
-                                const row = `<tr onclick="redirectToProcess(${thesis.thesis_id})">
-                                    <td>${thesis.thesis_id}</td>
-                                    <td>${thesis.title}</td>
-                                    <td>${thesis.status}</td>
-                                    <td>${thesis.start_date}</td>
-                                    <td>${thesis.end_date || ''}</td>
-                                    <td>${thesis.supervisor_id}</td>
-                                </tr>`;
-                                tableBody.innerHTML += row;
-                            });
-                        } else {
-                            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Δεν βρέθηκαν διπλωματικές.</td></tr>';
-                        }
-                    } catch (e) {
-                        console.error("Σφάλμα κατά την επεξεργασία των δεδομένων JSON:", e);
-                    }
+function fetchTheses() {
+    const search = document.getElementById('search').value.trim();
+    const status = document.getElementById('statusFilter').value;
+    const role = document.getElementById('roleFilter').value;
+
+    const params = new URLSearchParams({
+        search: search,
+        status: status,
+        role: role
+    });
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', `fetch_theses(listaDiplomatikon).php?${params.toString()}`, true);
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            try {
+                const theses = JSON.parse(xhr.responseText);
+                const tableBody = document.querySelector('#theses-table tbody');
+                tableBody.innerHTML = '';
+                if (theses.length > 0) {
+                    theses.forEach(thesis => {
+                        const row = `<tr onclick="redirectToProcess(${thesis.thesis_id})">
+                            <td>${thesis.thesis_id}</td>
+                            <td>${thesis.title}</td>
+                            <td>${thesis.status}</td>
+                            <td>${thesis.start_date}</td>
+                            <td>${thesis.end_date || ''}</td>
+                            <td>${thesis.supervisor_id}</td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Δεν βρέθηκαν διπλωματικές.</td></tr>';
                 }
-            };
-            xhr.send();
+            } catch (e) {
+                console.error("Σφάλμα κατά την επεξεργασία JSON:", e);
+            }
         }
+    };
+    xhr.send();
+}
+
 
         function redirectToProcess(thesisId) {
             window.location.href = `process.php?thesis_id=${thesisId}`;
