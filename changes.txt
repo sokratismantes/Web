@@ -240,6 +240,21 @@ DELIMITER ;
     FOREIGN KEY (thesis_id) REFERENCES theses(thesis_id) ON DELETE CASCADE
 );
 
+------ 2/8/2025------------
+20: ALTER TABLE theses ADD PRIMARY KEY (thesis_id);
+
+21: CREATE TABLE examinations (
+    exam_id INT AUTO_INCREMENT PRIMARY KEY,
+    thesis_id INT NOT NULL,
+    exam_date DATE NOT NULL,
+    exam_time TIME NOT NULL,
+    exam_mode ENUM('δια ζώσης', 'διαδικτυακά') NOT NULL,
+    room VARCHAR(100) DEFAULT NULL,
+    link VARCHAR(255) DEFAULT NULL,
+    FOREIGN KEY (thesis_id) REFERENCES theses(thesis_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 
 ΑΡΧΙΚΗ ΒΑΣΗ 
 
@@ -565,6 +580,7 @@ WHERE `thesis_id` = 24;
 UPDATE `theses` 
 SET `repository_link` = CONCAT('https://repository.university.gr/thesis/', `thesis_id`)
 WHERE `thesis_id` BETWEEN 20 AND 24;
+
 
 
 
