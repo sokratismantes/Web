@@ -254,6 +254,22 @@ DELIMITER ;
     FOREIGN KEY (thesis_id) REFERENCES theses(thesis_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+22: DROP PROCEDURE IF EXISTS SendInvitationToProfessor;
+
+DELIMITER $$
+
+CREATE PROCEDURE SendInvitationToProfessor(
+    IN studentId INT,
+    IN thesisId INT,
+    IN professorId INT,
+    IN comments TEXT
+)
+BEGIN
+    INSERT INTO invitations (student_id, thesis_id, professor_id, comments)
+    VALUES (studentId, thesisId, professorId, comments);
+END$$
+
+DELIMITER ;
 
 
 ΑΡΧΙΚΗ ΒΑΣΗ 
@@ -580,6 +596,7 @@ WHERE `thesis_id` = 24;
 UPDATE `theses` 
 SET `repository_link` = CONCAT('https://repository.university.gr/thesis/', `thesis_id`)
 WHERE `thesis_id` BETWEEN 20 AND 24;
+
 
 
 
