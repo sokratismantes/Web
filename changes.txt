@@ -597,6 +597,52 @@ UPDATE `theses`
 SET `repository_link` = CONCAT('https://repository.university.gr/thesis/', `thesis_id`)
 WHERE `thesis_id` BETWEEN 20 AND 24;
 
+..........................................................................
+ΓΙΑ ΓΡΑΜΜΑΤΕΙΑ ΚΑΙ ΦΕΤΣ 
+1.
+DELIMITER $$
+
+CREATE PROCEDURE cancelThesis(
+    IN p_thesis_id INT,
+    IN p_reason TEXT,
+    IN p_gs_number INT,
+    IN p_gs_year INT
+)
+BEGIN
+    -- Ενημέρωση κατάστασης σε 'Ακυρωμένη'
+    UPDATE Theses
+    SET 
+        status = 'Ακυρωμένη',
+        cancelation_reason = p_reason,
+        cancel_gs_number = p_gs_number,
+        cancel_gs_year = p_gs_year,
+        end_date = CURDATE()
+    WHERE thesis_id = p_thesis_id;
+END $$
+
+DELIMITER ;
+
+
+2.
+DELIMITER $$
+
+CREATE PROCEDURE completeThesis(
+    IN p_thesis_id INT
+)
+BEGIN
+    -- Ενημέρωση κατάστασης σε 'Ολοκληρωμένη' και καταχώρηση ημερομηνίας λήξης
+    UPDATE Theses
+    SET 
+        status = 'Ολοκληρωμένη',
+        end_date = CURDATE()
+    WHERE thesis_id = p_thesis_id;
+END $$
+
+DELIMITER ;
+
+
+
+
 
 
 
