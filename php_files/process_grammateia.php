@@ -65,48 +65,11 @@ while ($row = $result_committee->fetch_assoc()) {
     $committee_members[] = $row;
 }
 
-// Υπολογισμός χρόνου που έχει περάσει από την ημερομηνία έναρξης
+// Υπολογισμός χρόνου από την έναρξη
 $start_date = new DateTime($thesis['start_date']);
 $current_date = new DateTime();
 $interval = $start_date->diff($current_date);
 $elapsed_time = $interval->format('%y έτη, %m μήνες, %d ημέρες');
-
-$message = "";
-
-// Χειρισμός ακύρωσης
-if (isset($_POST['cancel'])) {
-    $cancelation_reason = isset($_POST['cancelation_reason']) ? $conn->real_escape_string($_POST['cancelation_reason']) : null;
-    $cancel_gs_number = isset($_POST['cancel_gs_number']) ? intval($_POST['cancel_gs_number']) : 0;
-    $cancel_gs_year = isset($_POST['cancel_gs_year']) ? intval($_POST['cancel_gs_year']) : 0;
-
-    if (empty($cancelation_reason)) {
-        echo "<script>alert('Παρακαλώ εισάγετε τον λόγο ακύρωσης.');</script>";
-        exit();
-    }
-
-    $stmt = $conn->prepare("CALL cancelThesis(?, ?, ?, ?)");
-    $stmt->bind_param("isii", $thesis_id, $cancelation_reason, $cancel_gs_number, $cancel_gs_year);
-
-    if ($stmt->execute()) {
-        header("Location: grammateia_home.php");
-        exit();
-    } else {
-        echo "<script>alert('Σφάλμα κατά την εκτέλεση της ακύρωσης: " . $conn->error . "');</script>";
-    }
-}
-
-// Χειρισμός ολοκλήρωσης
-if (isset($_POST['complete'])) {
-    $stmt = $conn->prepare("CALL completeThesis(?)");
-    $stmt->bind_param("i", $thesis_id);
-
-    if ($stmt->execute()) {
-        header("Location: grammateia_home.php");
-        exit();
-    } else {
-        $message = "Σφάλμα κατά την ενημέρωση: " . $conn->error;
-    }
-}
 
 $conn->close();
 ?>
@@ -116,21 +79,15 @@ $conn->close();
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Επεξεργασία Θέματος</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
             margin: 0;
             padding: 0;
-            background-color: #f5f5f5;
             color: #333;
         }
-
-        .status.cancelled {
-        color: red;
-}
-
 
         .container {
             margin: 50px auto;
@@ -138,41 +95,24 @@ $conn->close();
             max-width: 800px;
             background-color: #fff;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         h1 {
             text-align: center;
             color: #0056b3;
-            margin-bottom: 20px;
-        }
-
-        .message {
-            text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-            color: green;
-        }
-
-        .error {
-            color: red;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
         }
 
         label {
             font-weight: bold;
         }
 
-        input, textarea, select, button {
+        input, textarea, button {
             padding: 10px;
             font-size: 1rem;
             border: 1px solid #ccc;
             border-radius: 4px;
+            width: 100%;
         }
 
         button {
@@ -180,6 +120,7 @@ $conn->close();
             color: white;
             cursor: pointer;
             border: none;
+            margin-top: 10px;
         }
 
         button:hover {
@@ -188,12 +129,23 @@ $conn->close();
 
         .delete-button {
             background-color: red;
-            margin-top: 10px;
         }
 
         .delete-button:hover {
             background-color: darkred;
         }
+
+        .readonly-field {
+            margin-bottom: 15px;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .status.active { color: green; }
+        .status.pending { color: orange; }
+        .status.cancelled { color: red; }
 
         .back-link {
             text-align: center;
@@ -208,136 +160,153 @@ $conn->close();
         .back-link a:hover {
             text-decoration: underline;
         }
-        .status {
-    font-weight: bold;
-        }
-
-    .status.active {
-    color: green;
-       }
-
-   .status.pending {
-    color: orange;
-       }
-
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Επεξεργασία Θέματος</h1>
+<div class="container">
+    <h1>Επεξεργασία Θέματος</h1>
 
-        <!-- Εμφάνιση μηνύματος -->
-        <?php if (!empty($message)): ?>
-            <div class="message <?php echo strpos($message, 'Σφάλμα') !== false ? 'error' : ''; ?>">
-                <?php echo $message; ?>
-            </div>
-        <?php endif; ?>
+    <form id="thesisForm">
+        <label>Τίτλος Θέματος:</label>
+        <div class="readonly-field"><?php echo htmlspecialchars($thesis['title']); ?></div>
 
-        <!-- Εμφάνιση δεδομένων -->
-        <form method="POST">
-            <label for="title">Τίτλος Θέματος:</label>
-            <div class="readonly-field" id="title"> <?php echo $thesis['title']; ?> </div>
+        <label>Περιγραφή:</label>
+        <div class="readonly-field"><?php echo nl2br(htmlspecialchars($thesis['description'])); ?></div>
 
-            <label for="description">Περιγραφή:</label>
-            <div class="readonly-field" id="description"> <?php echo $thesis['description']; ?> </div>
-
-            <label>Τρέχουσα Κατάσταση:</label>
-            <?php
+        <label>Κατάσταση:</label>
+        <?php
             $status_class = '';
             switch ($thesis['status']) {
-            case 'Ενεργή':
-            $status_class = 'active';
-            break;
-            case 'Υπό Εξέταση':
-            $status_class = 'pending';
-            break;
-            case 'Ακυρωμένη':
-        $status_class = 'cancelled';
-        break;
-    default:
-        $status_class = '';
-}
-?>
-<p class="status <?php echo $status_class; ?>">
-    <?php echo htmlspecialchars($thesis['status']); ?>
-</p>
+                case 'Ενεργή': $status_class = 'active'; break;
+                case 'Υπό Εξέταση': $status_class = 'pending'; break;
+                case 'Ακυρωμένη': $status_class = 'cancelled'; break;
+            }
+        ?>
+        <p class="status <?php echo $status_class; ?>"><?php echo htmlspecialchars($thesis['status']); ?></p>
 
+        <label>Ημερομηνία Έναρξης:</label>
+        <div class="readonly-field"><?php echo htmlspecialchars($thesis['start_date']); ?></div>
 
-                
-            </select>
-
-            <label for="start_date">Ημερομηνία Έναρξης:</label>
-            <div class="readonly-field" id="start_date"><?php echo $thesis['start_date']; ?></div>
-
-        
-
-            <!-- Έλεγχος αν η κατάσταση δεν είναι 'Υπό Εξέταση' -->
-            <?php if ($thesis['status'] != 'Υπό Εξέταση'): ?>
+        <?php if ($thesis['status'] !== 'Υπό Εξέταση'): ?>
             <p>Χρόνος από την ανάθεση: <?php echo $elapsed_time; ?></p>
-            <?php endif; ?>
-            
-            <!-- Τριμελής Επιτροπή -->
-            <h3>Τριμελής Επιτροπή</h3>
-<table border="1" cellpadding="8" cellspacing="0">
-    <thead>
-        <tr>
-            <th>Ρόλος</th>
-            <th>ID Καθηγητή</th>
-            <th>Όνομα</th>
-            <th>Επώνυμο</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php foreach ($committee_members as $member): ?>
+        <?php endif; ?>
+
+        <h3>Τριμελής Επιτροπή</h3>
+        <table border="1" cellpadding="8" cellspacing="0">
+            <thead>
             <tr>
-                <td><?php echo htmlspecialchars($member['role']); ?></td>
-                <td><?php echo htmlspecialchars($member['professor_id']); ?></td>
-                <td><?php echo htmlspecialchars($member['name']); ?></td>
-                <td><?php echo htmlspecialchars($member['surname']); ?></td>
+                <th>Ρόλος</th>
+                <th>ID Καθηγητή</th>
+                <th>Όνομα</th>
+                <th>Επώνυμο</th>
             </tr>
-        <?php endforeach; ?>
-    </tbody>
-</table>
+            </thead>
+            <tbody>
+            <?php foreach ($committee_members as $member): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($member['role']); ?></td>
+                    <td><?php echo htmlspecialchars($member['professor_id']); ?></td>
+                    <td><?php echo htmlspecialchars($member['name']); ?></td>
+                    <td><?php echo htmlspecialchars($member['surname']); ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
 
+        <?php if ($thesis['status'] === 'Ενεργή'): ?>
+            <h3>Ακύρωση Ανάθεσης Θέματος</h3>
 
-            <?php if ($thesis['status'] == 'Ενεργή'): ?>
-                <h3>Ακύρωση Ανάθεσης Θέματος</h3>
-                
+            <label for="cancel_gs_number">Αριθμός ΓΣ:</label>
+            <input type="number" id="cancel_gs_number" name="cancel_gs_number" required>
 
-                <label for="cancel_gs_number">Αριθμός Ακύρωσης ΓΣ:</label>
-                <input type="number" id="cancel_gs_number" name="cancel_gs_number" required>
+            <label for="cancel_gs_year">Έτος Απόφασης ΓΣ:</label>
+            <input type="number" id="cancel_gs_year" name="cancel_gs_year" required>
 
-                <label for="cancel_gs_year">Έτος Απόφασης ΓΣ:</label>
-                <input type="number" id="cancel_gs_year" name="cancel_gs_year" required>
+            <label for="cancelation_reason">Λόγος Ακύρωσης:</label>
+            <textarea id="cancelation_reason" name="cancelation_reason" rows="3" required></textarea>
 
-                <label for="cancelation_reason">Λόγος Ακύρωσης:</label>
-                <textarea id="cancelation_reason" name="cancelation_reason" rows="3" required></textarea>
+            <button type="button" name="cancel" class="delete-button">Ακύρωση Ανάθεσης</button>
+        <?php endif; ?>
 
-                <button type="submit" name="cancel" class="delete-button">Ακύρωση Ανάθεσης</button>
-                <button type="submit" name="update">Αποθήκευση Αλλαγών</button>
-            <?php endif; ?>
+        <?php if ($thesis['status'] === 'Υπό Εξέταση'): ?>
+            <label>Καταχωρημένος Βαθμός:</label>
+            <input type="text" name="grade" value="<?php echo htmlspecialchars($grade); ?>" readonly>
 
-            
-                
-            <?php if ($thesis['status'] == 'Υπό Εξέταση'): ?>
-    <form method="POST" action="">
-        <label for="grade">Καταχωρημένος Βαθμός:</label>
-        <input type="text" id="grade" name="grade" value="<?php echo htmlspecialchars($grade); ?>" readonly required>
-        
+            <label>Σύνδεσμος προς Νημερτή:</label>
+            <input type="url" name="link" value="<?php echo htmlspecialchars($thesis['repository_link']); ?>" readonly>
 
-        <label for="link">Σύνδεσμος προς το Νημερτή:</label>
-        <input type="url" id="link" name="link" value="<?php echo htmlspecialchars($thesis['repository_link']); ?>" readonly required>
-
-        <button type="submit" name="complete">Ολοκλήρωση ΔΕ</button>
+            <button type="button" name="complete">Ολοκλήρωση ΔΕ</button>
+        <?php endif; ?>
     </form>
-            <?php endif; ?>
 
-            
-        </form>
-
-        <div class="back-link">
-            <a href="grammateia_home.php">Πίσω στη Λίστα Διπλωματικών</a>
-        </div>
+    <div class="back-link">
+        <a href="grammateia_home.php">← Πίσω στη Λίστα Διπλωματικών</a>
     </div>
+</div>
+
+<!-- ✅ AJAX Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const thesisId = <?php echo $thesis_id; ?>;
+
+    const cancelBtn = document.querySelector('button[name="cancel"]');
+    const completeBtn = document.querySelector('button[name="complete"]');
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            const reason = document.getElementById('cancelation_reason').value.trim();
+            const gsNumber = document.getElementById('cancel_gs_number').value;
+            const gsYear = document.getElementById('cancel_gs_year').value;
+
+            if (reason === '') {
+                alert('Παρακαλώ εισάγετε τον λόγο ακύρωσης.');
+                return;
+            }
+
+            fetch('fetch_cancel_thesis.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    thesis_id: thesisId,
+                    cancelation_reason: reason,
+                    cancel_gs_number: gsNumber,
+                    cancel_gs_year: gsYear
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Η ακύρωση πραγματοποιήθηκε επιτυχώς.');
+                    window.location.href = 'grammateia_home.php';
+                } else {
+                    alert(data.message || 'Σφάλμα κατά την ακύρωση.');
+                }
+            })
+            .catch(() => alert('Σφάλμα σύνδεσης.'));
+        });
+    }
+
+    if (completeBtn) {
+        completeBtn.addEventListener('click', () => {
+            fetch('fetch_complete_thesis.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ thesis_id: thesisId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Η ολοκλήρωση πραγματοποιήθηκε επιτυχώς.');
+                    window.location.href = 'grammateia_home.php';
+                } else {
+                    alert(data.message || 'Σφάλμα κατά την ολοκλήρωση.');
+                }
+            })
+            .catch(() => alert('Σφάλμα σύνδεσης.'));
+        });
+    }
+});
+</script>
+
 </body>
 </html>
