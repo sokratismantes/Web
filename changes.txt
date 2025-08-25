@@ -271,6 +271,16 @@ END$$
 
 DELIMITER ;
 
+23: CREATE TABLE professor_notes (
+         note_id INT AUTO_INCREMENT PRIMARY KEY,
+         thesis_id INT NOT NULL,
+         professor_id INT NOT NULL,
+         note_text VARCHAR(300) NOT NULL,
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         FOREIGN KEY (thesis_id) REFERENCES theses(thesis_id) ON DELETE CASCADE,
+         FOREIGN KEY (professor_id) REFERENCES professors(professor_id) ON DELETE CASCADE
+       );
+
 
 ΑΡΧΙΚΗ ΒΑΣΗ 
 
@@ -639,6 +649,7 @@ BEGIN
 END $$
 
 DELIMITER ;
+
 
 
 
