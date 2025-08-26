@@ -1,60 +1,56 @@
 <?php
-// Ορισμός επικεφαλίδων για CORS και χωρίς ταυτοποίηση
-header("Access-Control-Allow-Origin: *");
+// Στοιχεία σύνδεσης με βάση δεδομένων
+$servername = "localhost";
+$username_db = "root";
+$password_db = "";
+$dbname = "vasst";
 
-// Λειτουργία: http://localhost/web_project/announcements.php?from=01082025&to=05082025&format=json
+// Σύνδεση με τη βάση
+$conn = new mysqli($servername, $username_db, $password_db, $dbname);
+
+// Έλεγχος σύνδεσης
+if ($conn->connect_error) {
+    die("Η σύνδεση απέτυχε: " . $conn->connect_error);
+}
+
+// Λήψη παραμέτρων GET
 $from = isset($_GET['from']) ? $_GET['from'] : null;
 $to = isset($_GET['to']) ? $_GET['to'] : null;
 $format = isset($_GET['format']) ? strtolower($_GET['format']) : 'json';
 
-function respondWithError($message) {
-    http_response_code(400);
-    echo json_encode(["error" => $message]);
-    exit;
+// Μετατροπή ημερομηνιών σε μορφή YYYY-MM-DD για MySQL
+function convertDate($dateStr) {
+    $day = substr($dateStr, 0, 2);
+    $month = substr($dateStr, 2, 2);
+    $year = substr($dateStr, 4, 4);
+    return "$year-$month-$day";
 }
 
-// Έλεγχος εγκυρότητας ημερομηνιών (μορφή ddmmyyyy)
-if (!$from || !$to || !preg_match('/^\d{8}$/', $from) || !preg_match('/^\d{8}$/', $to)) {
-    respondWithError("Παρακαλώ ορίστε έγκυρες παραμέτρους 'from' και 'to' σε μορφή ddmmyyyy.");
+$where = "";
+if ($from && $to) {
+    $from_date = convertDate($from);
+    $to_date = convertDate($to);
+    $where = "WHERE date BETWEEN '$from_date' AND '$to_date'";
 }
 
-// Μετατροπή σε format ημερομηνίας για SQL
-$from_sql = DateTime::createFromFormat('dmY', $from)->format('Y-m-d');
-$to_sql = DateTime::createFromFormat('dmY', $to)->format('Y-m-d');
+// Ανάκτηση δεδομένων από τη βάση
+$sql = "SELECT date, time, title, announcement_text FROM Announcements $where ORDER BY date, time";
+$result = $conn->query($sql);
 
-// Σύνδεση με τη βάση δεδομένων
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "vasst";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    respondWithError("Σφάλμα σύνδεσης με τη βάση: " . $conn->connect_error);
-}
-$conn->set_charset("utf8");
-
-// Ανάκτηση ανακοινώσεων βάσει εύρους ημερομηνιών
-$stmt = $conn->prepare("
-    SELECT date, time, title, announcement_text 
-    FROM announcements 
-    WHERE date BETWEEN ? AND ?
-    ORDER BY date, time
-");
-$stmt->bind_param("ss", $from_sql, $to_sql);
-$stmt->execute();
-$result = $stmt->get_result();
-
+// Δημιουργία λίστας ανακοινώσεων
 $announcements = [];
-while ($row = $result->fetch_assoc()) {
-    $announcements[] = [
-        "date" => DateTime::createFromFormat('Y-m-d', $row['date'])->format('dmY'),
-        "time" => DateTime::createFromFormat('H:i:s', $row['time'])->format('Hi'),
-        "title" => $row['title'],
-        "announcement_text" => $row['announcement_text']
-    ];
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $announcements[] = [
+            "date" => date("dmY", strtotime($row['date'])),
+            "time" => date("Hi", strtotime($row['time'])),
+            "title" => $row['title'],
+            "announcement_text" => $row['announcement_text']
+        ];
+    }
 }
 
+// Δημιουργία δομής για έξοδο
 $output = [
     "announcements" => [
         "from" => $from,
@@ -63,23 +59,27 @@ $output = [
     ]
 ];
 
-// Επιστροφή αποτελέσματος με βάση format
+// Επιστροφή JSON ή XML
 if ($format === 'json') {
-    header("Content-Type: application/json");
+    header('Content-Type: application/json; charset=utf-8');
     echo json_encode($output, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 } elseif ($format === 'xml') {
-    header("Content-Type: application/xml; charset=UTF-8");
-    echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    echo "<announcements from=\"$from\" to=\"$to\">\n";
+    header('Content-Type: application/xml; charset=utf-8');
+    $xml = new SimpleXMLElement('<announcements/>');
+    $xml->addChild('from', $from);
+    $xml->addChild('to', $to);
+    $list = $xml->addChild('announcement_list');
     foreach ($announcements as $a) {
-        echo "  <announcement>\n";
-        echo "    <date>{$a['date']}</date>\n";
-        echo "    <time>{$a['time']}</time>\n";
-        echo "    <title>" . htmlspecialchars($a['title']) . "</title>\n";
-        echo "    <announcement_text>" . htmlspecialchars($a['announcement_text']) . "</announcement_text>\n";
-        echo "  </announcement>\n";
+        $item = $list->addChild('announcement');
+        $item->addChild('date', $a['date']);
+        $item->addChild('time', $a['time']);
+        $item->addChild('title', htmlspecialchars($a['title']));
+        $item->addChild('announcement_text', htmlspecialchars($a['announcement_text']));
     }
-    echo "</announcements>";
+    echo $xml->asXML();
 } else {
-    respondWithError("Άγνωστη μορφή εξόδου. Επιτρεπτές τιμές: 'json' ή 'xml'.");
+    echo "Μη υποστηριζόμενη μορφή. Επιλέξτε json ή xml.";
 }
+
+$conn->close();
+?>
