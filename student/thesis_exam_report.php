@@ -8,7 +8,6 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // --- AJAX: αποθήκευση συνδέσμου αποθετηρίου (Νημερτής)
-    // ΒΑΛ' ΤΟ ΠΡΙΝ ΑΠΟ ΟΠΟΙΟΔΗΠΟΤΕ SELECT/DIE
     if ($_SERVER['REQUEST_METHOD'] === 'POST'
         && isset($_GET['action'])
         && $_GET['action'] === 'save_repo') {
@@ -809,3 +808,4 @@ async function saveRepositoryLink(){
 
 </body>
 </html>
+
