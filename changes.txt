@@ -281,6 +281,10 @@ DELIMITER ;
          FOREIGN KEY (professor_id) REFERENCES professors(professor_id) ON DELETE CASCADE
        );
 
+24:ALTER TABLE theses
+  ADD COLUMN cancellation_ga_number VARCHAR(50) NULL AFTER cancellation_reason,
+  ADD COLUMN cancellation_ga_year INT NULL AFTER cancellation_ga_number;
+
 
 ΑΡΧΙΚΗ ΒΑΣΗ 
 
@@ -696,6 +700,7 @@ VALUES
 
 ('2025-10-05', '12:15:00', 'Δημόσια Παρουσίαση Διπλωματικής Δημήτρη Παναγιώτου',
  'Την 05/10/2025 και ώρα 12:15 θα παρουσιαστεί η διπλωματική του Δημήτρη Παναγιώτου στην αίθουσα Θ2.');
+
 
 
 
