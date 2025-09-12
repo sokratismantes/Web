@@ -1,3 +1,15 @@
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `update_assign_gs`(
+    IN p_thesis_id INT,
+    IN p_assign_gs_number INT
+)
+BEGIN
+    UPDATE Theses
+    SET assign_gs_number = p_assign_gs_number
+    WHERE thesis_id = p_thesis_id;
+END$$
+DELIMITER ;
+
 ALTER TABLE theses
 ADD COLUMN assign_gs_number INT NULL AFTER start_date;
 
