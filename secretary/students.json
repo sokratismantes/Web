@@ -1,0 +1,35 @@
+{
+  
+  "students": [
+    {
+      "id": "118",
+      "name": "Ioannis",
+      "surname": "Makropoulos",
+      "student_number": "10453559",
+      "street": "Kyprou",
+      "number": "45",
+      "city": "Athens",
+      "postcode": "39951",
+      "father_name": "Georgios",
+      "landline_telephone": "2102299087",
+      "mobile_telephone": "6985922158"
+     
+    },
+    {
+      "id": "119",
+      "name": "Panagiota",
+      "surname": "Koutsoxeri",
+      "student_number": "10437000",
+      "street": "Ermou",
+      "number": "18",
+      "city": "Athens",
+      "postcode": "10431",
+      "father_name": "Pavlos",
+      "landline_telephone": "2101112346",
+      "mobile_telephone": "6970088812"
+    
+    }
+ 
+  ]
+}
+
