@@ -8,7 +8,6 @@ const DB_PASS = '';
 const DB_NAME = 'vasst';
 const TABLE_NAME = 'Announcements'; 
 
-/* ΒΟΗΘΗΤΙΚΑ ΓΙΑ API */
 function respond_json(array $payload, int $status = 200): void {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
@@ -35,7 +34,7 @@ function respond_xml(array $list, string $from, string $to, int $status = 200): 
     echo $xml->asXML();
     exit();
 }
-/** ddmmyyyy -> 'YYYY-MM-DD' ή null */
+
 function ddmmyyyy_to_mysql(?string $s): ?string {
     if (!is_string($s) || !preg_match('/^\d{8}$/', $s)) return null;
     $d = (int)substr($s, 0, 2);
@@ -44,12 +43,12 @@ function ddmmyyyy_to_mysql(?string $s): ?string {
     if (!checkdate($m, $d, $y)) return null;
     return sprintf('%04d-%02d-%02d', $y, $m, $d);
 }
-/** 'YYYY-MM-DD' -> ddmmyyyy */
+
 function mysql_date_to_ddmmyyyy(string $date): string {
     $ts = strtotime($date);
     return $ts ? date('dmY', $ts) : '';
 }
-/** 'HH:MM[:SS]' -> hhmm */
+
 function mysql_time_to_hhmm(string $time): string {
     if (preg_match('/^(\d{2}):(\d{2})/', $time, $m)) return $m[1].$m[2];
     $ts = strtotime($time);
@@ -241,3 +240,4 @@ if ($format === 'json') {
 } else {
     respond_xml($announcement_list, $from_raw, $to_raw, 200);
 }
+
