@@ -701,19 +701,18 @@ VALUES
 ('2025-10-05', '12:15:00', 'Δημόσια Παρουσίαση Διπλωματικής Δημήτρη Παναγιώτου',
  'Την 05/10/2025 και ώρα 12:15 θα παρουσιαστεί η διπλωματική του Δημήτρη Παναγιώτου στην αίθουσα Θ2.');
 
-
 ALTER TABLE users
+  ADD PRIMARY KEY (user_id),
   ADD UNIQUE KEY ux_users_email (email),
   ADD KEY ix_users_user_type (user_type);
 
-
 ALTER TABLE students
+  ADD PRIMARY KEY (student_id),
   ADD UNIQUE KEY ux_students_student_number (student_number),
-  ADD UNIQUE KEY ux_students_email (email),
   ADD KEY ix_students_surname_name (surname, name);
 
 ALTER TABLE professors
-  ADD UNIQUE KEY ux_professors_email (email),
+  ADD PRIMARY KEY (professor_id),
   ADD KEY ix_professors_department (department),
   ADD KEY ix_professors_surname_name (surname, name);
 
@@ -722,7 +721,7 @@ ALTER TABLE theses
   ADD KEY ix_theses_student (student_id),
   ADD KEY ix_theses_status_start (status, start_date),
   ADD KEY ix_theses_start_date (start_date),
-  ADD FULLTEXT KEY ftx_theses_title_desc (title, description);
+  ADD KEY ix_theses_end_date (end_date);
 
 ALTER TABLE committees
   ADD UNIQUE KEY ux_committees_thesis (thesis_id),
@@ -731,7 +730,8 @@ ALTER TABLE committees
   ADD KEY ix_committees_member2 (member2_id);
 
 ALTER TABLE committeeinvitations
-  ADD KEY ix_cinv_prof_status (professor_id, status, sent_at),
+  ADD PRIMARY KEY (invitation_id),
+  ADD KEY ix_cinv_prof_status_time (invited_professor_id, status, sent_at),
   ADD KEY ix_cinv_thesis (thesis_id),
   ADD KEY ix_cinv_sent_at (sent_at);
 
@@ -741,31 +741,32 @@ ALTER TABLE professors_notifications
   ADD KEY ix_pn_student (student_id),
   ADD KEY ix_pn_sent_at (sent_at);
 
-
 ALTER TABLE examinations
-  ADD UNIQUE KEY ux_exams_thesis (thesis_id),
   ADD KEY ix_exams_date_time (exam_date, exam_time),
   ADD KEY ix_exams_mode (exam_mode);
 
 ALTER TABLE exam_results
   ADD UNIQUE KEY ux_er_thesis_prof (thesis_id, professor_id),
   ADD KEY ix_er_thesis (thesis_id),
-  ADD KEY ix_er_professor (professor_id);
+  ADD KEY ix_er_professor (professor_id),
+  ADD KEY ix_er_exam_date (exam_date);
 
 ALTER TABLE professor_notes
-  ADD KEY ix_pn_thesis_time (thesis_id, created_at),
-  ADD KEY ix_pn_prof (professor_id),
-  ADD KEY ix_pn_prof_thesis_time (professor_id, thesis_id, created_at);
+  ADD KEY ix_pnotes_thesis_time (thesis_id, created_at),
+  ADD KEY ix_pnotes_prof (professor_id),
+  ADD KEY ix_pnotes_prof_thesis_time (professor_id, thesis_id, created_at);
 
 ALTER TABLE attachments
+  ADD PRIMARY KEY (attachment_id),
   ADD KEY ix_att_thesis_time (thesis_id, uploaded_at),
   ADD KEY ix_att_student_time (student_id, uploaded_at);
 
 ALTER TABLE announcements
-  ADD KEY ix_ann_created (created_at),
-  ADD FULLTEXT KEY ftx_ann_title_content (title, content);
+  ADD KEY ix_ann_date_time (date, time);
 
 ALTER TABLE grammateia
-  ADD KEY ix_gram_created (created_at),
-  ADD FULLTEXT KEY ftx_gram_title (title);
+  ADD PRIMARY KEY (grammateia_id),
+  ADD KEY ix_gram_full_name (full_name);
+
+
 
