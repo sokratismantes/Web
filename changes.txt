@@ -768,5 +768,11 @@ ALTER TABLE grammateia
   ADD PRIMARY KEY (grammateia_id),
   ADD KEY ix_gram_full_name (full_name);
 
+ALTER TABLE attachments
+  ADD KEY ix_att_thesis_time (thesis_id, uploaded_at),
+  ADD KEY ix_att_student_time (student_id, uploaded_at);
+
+
+
 
 
