@@ -29,7 +29,7 @@ try {
     
     $thesis_id = isset($_GET['thesis_id']) ? intval($_GET['thesis_id']) : 0;
 
-    // --- ΑΝΑΚΤΗΣΗ ΔΕΔΟΜΕΝΩΝ ΓΙΑ ΣΥΓΚΕΚΡΙΜΕΝΗ ΔΙΠΛΩΜΑΤΙΚΗ ---
+    
     $allowed_override_ids = [1,2,3,4,5,6,7,8,9,10,11,12,13];
 
     if (in_array($thesis_id, $allowed_override_ids)) {
@@ -243,7 +243,7 @@ try {
     }
     .readonly-form .form-group--full input[readonly]{ font-size:clamp(.95rem, 1.9vw, 1.06rem); }
 
-    /* Αριστερή λεπτή μπάρα έμφασης */
+    /* Αριστερή μπάρα */
     .readonly-form .form-group::before{
       content:""; position:absolute; left:0; top:8px; bottom:8px; width:4px; border-radius:4px;
       background:linear-gradient(180deg,#8fb5ff,#5b8def); opacity:.55;
@@ -718,3 +718,4 @@ document.addEventListener('DOMContentLoaded', function(){
 
 </body>
 </html>
+
