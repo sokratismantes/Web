@@ -17,7 +17,7 @@ try {
 
     $email = $_SESSION['email']; 
 
-    // Ανάκτηση ονόματος και επωνύμου χρήστη
+    
     $stmt = $pdo->prepare("SELECT s.name, s.surname, s.student_number FROM students s JOIN users u ON s.student_id = u.user_id WHERE u.email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -431,3 +431,4 @@ try {
 
 </body>
 </html>
+
