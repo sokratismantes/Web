@@ -41,7 +41,7 @@ try {
         exit;
     }
 
-    // Κανονική ροή σελίδας
+    
     $thesis_id = isset($_GET['thesis_id']) ? intval($_GET['thesis_id']) : 0;
 
     $stmt = $pdo->prepare("
@@ -221,7 +221,7 @@ try {
         }
         @keyframes fadein { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Τίτλοι σε navy */
+        /* Τίτλοι */
         h1, h2 { color: var(--navy); }
 
         .row { margin-bottom: 15px; }
@@ -271,7 +271,7 @@ try {
         .info-card .label { font-weight: bold; margin-bottom: 6px; }
         .info-card a { color: #007bff; word-break: break-all; }
 
-        /* Silver-Blue εμφάνιση */
+        /* Silver-Blue */
         .download-btn,
         .btn-soft-blue {
             border-radius:12px;
@@ -627,3 +627,4 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
