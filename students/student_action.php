@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 WHERE thesis_id = ? AND (status IS NULL OR status <> 'Περατωμένη')
             ")->execute([$thesisId]);
 
-            // PRG redirect με μήνυμα επιτυχίας
+            // μήνυμα επιτυχίας
             redirect_with_notice("✅ Το πρόχειρο καταχωρήθηκε (αρχείο/σύνδεσμος).", "success");
 
         } catch (Throwable $e) {
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("INSERT INTO examinations (thesis_id, exam_date, exam_time, exam_mode, room, link) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([$thesisId, $examDate, $examTime, $examMode, $examRoom, $examLink]);
 
-            // PRG redirect με μήνυμα επιτυχίας
+            // μήνυμα επιτυχίας
             redirect_with_notice("✅ Η εξέταση καταχωρήθηκε επιτυχώς!", "success");
 
         } catch (PDOException $e) {
@@ -392,7 +392,7 @@ footer{
 
       <div class="form-group">
         <label for="exam_time">Ώρα Εξέτασης (ανά 30′):</label>
-        <!-- Βασικός περιορισμός 30' + λίστα επιλογών -->
+        
         <input type="time" id="exam_time" name="exam_time" required step="1800" list="halfHourSlots">
         <div class="help">Επιλέξτε ώρα σε βήμα μισής ώρας (π.χ. 09:00, 09:30, 10:00 ...).</div>
       </div>
@@ -544,3 +544,4 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
