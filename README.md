@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/user-attachments/assets/8b8d5f84-fc8b-4840-b2a9-7a3829783e30" alt="Στιγμιότυπο οθόνης 2025-09-21 050537" width="32%"/>
-<img src="https://github.com/user-attachments/assets/5c157d7d-a1f3-4c6c-a2be-527e03f231f9" alt="Στιγμιότυπο οθόνης 2025-09-21 050628" width="32%"/>
-<img src="https://github.com/user-attachments/assets/e2ed431c-64a9-4098-b434-394383c4b3b7" alt="Στιγμιότυπο οθόνης 2025-09-21 050745" width="32%"/>
+<img src="https://github.com/user-attachments/assets/22634301-cd3b-434a-8151-59bc14eee7d6" alt="Στιγμιότυπο_οθόνης_2025-09-21_050537-removebg-preview" width="32%"/>
+<img src="https://github.com/user-attachments/assets/a338d338-152f-45b6-9392-bc1c539d5217" alt="Στιγμιότυπο_οθόνης_2025-09-21_050628-removebg-preview" width="32%"/>
+<img src="https://github.com/user-attachments/assets/ec1bdcf3-c77b-4f01-bf90-d0330b17eaa6" alt="Στιγμιότυπο_οθόνης_2025-09-21_050745-removebg-preview" width="32%"/>
 </p>
