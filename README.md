@@ -5,5 +5,17 @@
 </p>
 
   # How SynThesis Works
-SynThesis is a role-based web application that streamlines the end-to-end lifecycle of university thesis projects for Students, Professors, and the Secretariat. It centralizes topic creation, assignment, and committee formation with invitation workflows that capture accept/decline decisions and enforce one-committee-per-thesis integrity. Students manage profiles, upload drafts and supporting artifacts, register exam logistics (date, time, mode, location/link), and track status transitions from “Under Assignment” to “Active,” “Under Examination,” and “Completed.” Professors supervise progress, record short private notes, set a thesis under examination, and submit grades; committee members see peers’ grades when permitted. Secretariat users oversee active and under-examination theses, register governing-body references, and finalize completions. The system autogenerates presentation announcements from examination data and exposes them via a public export endpoint in JSON or XML for easy dissemination. A clean, responsive UI supports mobile use, while strict authentication and role-based authorization protect sensitive data. The relational schema enforces referential integrity and uses targeted indexes to keep filtering, search, and reporting fast at scale. All dynamic pages load data via AJAX to keep interactions smooth and decoupled from server templates. The application maintains an auditable trail of key actions (assignments, invitations, grading) for transparency. Overall, SynThesis reduces administrative friction, increases oversight, and delivers a unified, compliant workflow for thesis management.
+
+SynThesis is a role-based web app that streamlines the end-to-end lifecycle of university theses.    
+It centralizes topic creation, student assignment, and committee formation with invitation flows.    
+Students manage profiles, upload artifacts, see milestones, and track status from Active to Done.    
+Professors supervise progress, record private notes, trigger “Under Examination,” and submit grades. 
+Committee members collaborate transparently; peer grades are visible where policy allows.           
+Examination logistics (date, time, mode, room/link) drive auto-generated presentation announcements. 
+A public export endpoint delivers announcements in JSON or XML for websites and mailing lists.       
+The Secretariat oversees compliance, archives outcomes, and finalizes completions across cohorts.    
+A relational schema enforces referential integrity; targeted indexes keep queries fast at scale.     
+Authentication and role-based authorization protect data; AJAX keeps the UI responsive and smooth.   
+Overall, SynThesis reduces administrative friction, improves oversight, and unifies thesis workflows.
+
 
