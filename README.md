@@ -1,3 +1,5 @@
+<img width="495" height="246" alt="Στιγμιότυπο_οθόνης_2025-09-21_052449-removebg-preview" src="https://github.com/user-attachments/assets/30e9b81a-97d8-421b-a0a7-adf326a41407" />
+
 <p align="center">
 <img src="https://github.com/user-attachments/assets/22634301-cd3b-434a-8151-59bc14eee7d6" alt="Στιγμιότυπο_οθόνης_2025-09-21_050537-removebg-preview" width="32%"/>
 <img src="https://github.com/user-attachments/assets/a338d338-152f-45b6-9392-bc1c539d5217" alt="Στιγμιότυπο_οθόνης_2025-09-21_050628-removebg-preview" width="32%"/>
